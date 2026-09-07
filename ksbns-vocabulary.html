@@ -1,0 +1,1015 @@
+<title>KSBNS 학회 어휘집</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+KR:wght@400;500;600&family=IBM+Plex+Serif:wght@500;600&display=swap">
+<style>
+  :root{
+    --paper:#f4f7f8;
+    --surface:#ffffff;
+    --ink:#10181c;
+    --ink-2:#46565e;
+    --ink-3:#7b8b92;
+    --line:#dbe4e7;
+    --line-soft:#e9eff1;
+    --accent:#0d6f79;
+    --accent-soft:#e0eff0;
+    --pop:#a8256f;
+    --pop-soft:#f8e6f0;
+    --mark:#bfe9ec;
+
+    --serif:"IBM Plex Serif",Georgia,"Times New Roman",serif;
+    --sans:"IBM Plex Sans KR","Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif;
+    --mono:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --paper:#0c1317;
+      --surface:#121d22;
+      --ink:#e7f0f2;
+      --ink-2:#a2b5bb;
+      --ink-3:#73878e;
+      --line:#213038;
+      --line-soft:#1a262c;
+      --accent:#4dcfd9;
+      --accent-soft:#11313a;
+      --pop:#f07ab5;
+      --pop-soft:#331830;
+      --mark:#1d4f57;
+    }
+  }
+  :root[data-theme="dark"]{
+    --paper:#0c1317;
+    --surface:#121d22;
+    --ink:#e7f0f2;
+    --ink-2:#a2b5bb;
+    --ink-3:#73878e;
+    --line:#213038;
+    --line-soft:#1a262c;
+    --accent:#4dcfd9;
+    --accent-soft:#11313a;
+    --pop:#f07ab5;
+    --pop-soft:#331830;
+    --mark:#1d4f57;
+  }
+
+  *{box-sizing:border-box}
+  body{
+    background:var(--paper);
+    color:var(--ink);
+    font-family:var(--sans);
+    font-size:15px;
+    line-height:1.55;
+    -webkit-font-smoothing:antialiased;
+  }
+  ::selection{background:var(--mark);color:var(--ink)}
+  a{color:inherit}
+  :focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:2px}
+
+  .shell{
+    display:grid;
+    grid-template-columns:210px minmax(0,1fr);
+    gap:0;
+    max-width:1180px;
+    margin:0 auto;
+  }
+
+  /* ---------- rail ---------- */
+  .rail{
+    border-right:1px solid var(--line);
+    padding:34px 22px 60px 24px;
+    position:sticky;
+    top:0;
+    align-self:start;
+    max-height:100vh;
+    overflow-y:auto;
+  }
+  .rail-mark{
+    font-family:var(--mono);
+    font-size:10px;
+    letter-spacing:.14em;
+    text-transform:uppercase;
+    color:var(--accent);
+    margin-bottom:26px;
+  }
+  .rail-group{margin-bottom:22px}
+  .rail-group h2{
+    font-family:var(--mono);
+    font-size:10px;
+    font-weight:500;
+    letter-spacing:.14em;
+    text-transform:uppercase;
+    color:var(--ink-3);
+    margin:0 0 8px;
+  }
+  .rail-group ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:1px}
+  .rail-group a{
+    display:block;
+    text-decoration:none;
+    font-size:13px;
+    color:var(--ink-2);
+    padding:3px 0;
+    border-left:2px solid transparent;
+    padding-left:9px;
+    margin-left:-11px;
+    transition:color .12s,border-color .12s;
+  }
+  .rail-group a:hover{color:var(--ink)}
+  .rail-group a.on{color:var(--accent);border-left-color:var(--accent)}
+  .rail-group a.empty{opacity:.3}
+
+  /* ---------- main ---------- */
+  main{padding:0 0 96px;min-width:0}
+
+  .masthead{
+    padding:38px 34px 26px;
+    display:flex;
+    gap:28px;
+    align-items:flex-end;
+    justify-content:space-between;
+    flex-wrap:wrap;
+  }
+  .eyebrow{
+    font-family:var(--mono);
+    font-size:10.5px;
+    letter-spacing:.13em;
+    text-transform:uppercase;
+    color:var(--ink-3);
+    margin:0 0 10px;
+  }
+  h1{
+    font-family:var(--serif);
+    font-weight:600;
+    font-size:38px;
+    line-height:1.1;
+    letter-spacing:-.015em;
+    margin:0 0 12px;
+    text-wrap:balance;
+  }
+  .standfirst{
+    margin:0;
+    max-width:46ch;
+    color:var(--ink-2);
+    font-size:14.5px;
+  }
+  .trace{flex:0 0 auto}
+  .trace figcaption{
+    font-family:var(--mono);
+    font-size:10px;
+    letter-spacing:.1em;
+    text-transform:uppercase;
+    color:var(--ink-3);
+    margin-top:6px;
+    text-align:right;
+  }
+
+  /* ---------- controls ---------- */
+  .controls{
+    position:sticky;
+    top:0;
+    z-index:5;
+    background:var(--paper);
+    border-top:1px solid var(--line);
+    border-bottom:1px solid var(--line);
+    padding:12px 34px;
+    display:flex;
+    gap:14px;
+    align-items:center;
+    flex-wrap:wrap;
+  }
+  .search{
+    flex:1 1 260px;
+    display:flex;
+    align-items:center;
+    gap:9px;
+    background:var(--surface);
+    border:1px solid var(--line);
+    border-radius:3px;
+    padding:0 11px;
+    min-width:0;
+  }
+  .search:focus-within{border-color:var(--accent)}
+  .search svg{flex:0 0 auto;color:var(--ink-3)}
+  .search input{
+    flex:1 1 auto;
+    min-width:0;
+    border:0;
+    background:none;
+    font-family:var(--sans);
+    font-size:14px;
+    color:var(--ink);
+    padding:8px 0;
+  }
+  .search input:focus{outline:none}
+  .search input::placeholder{color:var(--ink-3)}
+  .kbd{
+    font-family:var(--mono);
+    font-size:10px;
+    color:var(--ink-3);
+    border:1px solid var(--line);
+    border-radius:2px;
+    padding:1px 5px;
+  }
+  .toggle{
+    font-family:var(--sans);
+    font-size:13px;
+    color:var(--ink-2);
+    background:var(--surface);
+    border:1px solid var(--line);
+    border-radius:3px;
+    padding:8px 13px;
+    cursor:pointer;
+    white-space:nowrap;
+  }
+  .toggle:hover{color:var(--ink)}
+  .toggle[aria-pressed="true"]{
+    background:var(--accent-soft);
+    border-color:var(--accent);
+    color:var(--accent);
+  }
+  .count{
+    font-family:var(--mono);
+    font-size:11.5px;
+    font-variant-numeric:tabular-nums;
+    color:var(--ink-3);
+    white-space:nowrap;
+  }
+
+  /* ---------- sections ---------- */
+  .sec{padding:0 34px;scroll-margin-top:64px}
+  .sec.hidden{display:none}
+  .sec-head{
+    display:flex;
+    align-items:baseline;
+    gap:12px;
+    flex-wrap:wrap;
+    padding:40px 0 14px;
+  }
+  .sec-head h3{
+    font-family:var(--serif);
+    font-size:21px;
+    font-weight:600;
+    margin:0;
+    letter-spacing:-.01em;
+  }
+  .sec-head .en-name{
+    font-family:var(--mono);
+    font-size:10.5px;
+    letter-spacing:.12em;
+    text-transform:uppercase;
+    color:var(--ink-3);
+  }
+  .sec-head .n{
+    margin-left:auto;
+    font-family:var(--mono);
+    font-size:11px;
+    font-variant-numeric:tabular-nums;
+    color:var(--ink-3);
+  }
+
+  /* terms ledger */
+  .terms{
+    display:grid;
+    grid-template-columns:repeat(2,minmax(0,1fr));
+    column-gap:34px;
+    border-top:1px solid var(--line);
+  }
+  .term{
+    border-bottom:1px solid var(--line-soft);
+    padding:9px 4px 9px 0;
+    display:grid;
+    grid-template-columns:minmax(0,1fr);
+    gap:1px;
+  }
+  .term.hidden{display:none}
+  .term .en{
+    font-family:var(--serif);
+    font-size:15px;
+    font-weight:500;
+    line-height:1.35;
+    color:var(--ink);
+  }
+  .term .ko{font-size:13.5px;color:var(--ink-2)}
+  .term .note{
+    font-family:var(--mono);
+    font-size:11px;
+    color:var(--ink-3);
+    margin-top:2px;
+    line-height:1.45;
+  }
+
+  /* phrases */
+  .phrases{display:flex;flex-direction:column;gap:2px;border-top:1px solid var(--line);padding-top:10px}
+  .phrase{
+    border-left:2px solid var(--accent-soft);
+    padding:7px 0 7px 15px;
+  }
+  .phrase.hidden{display:none}
+  .phrase:hover{border-left-color:var(--accent)}
+  .phrase .en{
+    font-family:var(--serif);
+    font-size:15.5px;
+    line-height:1.45;
+    margin:0;
+  }
+  .phrase .ko{margin:1px 0 0;font-size:13px;color:var(--ink-2)}
+
+  /* confusable pairs */
+  .pairs{display:flex;flex-direction:column;gap:0;border-top:1px solid var(--line)}
+  .pair{
+    padding:11px 0 11px 15px;
+    border-left:2px solid var(--pop-soft);
+    border-bottom:1px solid var(--line-soft);
+  }
+  .pair.hidden{display:none}
+  .pair .en{
+    font-family:var(--serif);
+    font-weight:600;
+    font-size:15px;
+    color:var(--pop);
+  }
+  .pair .ko{font-size:13.5px;color:var(--ink-2);margin-top:1px}
+
+  mark{background:var(--mark);color:var(--ink);border-radius:2px;padding:0 1px}
+
+  /* gloss hiding */
+  .hide-gloss .term .ko,
+  .hide-gloss .phrase .ko,
+  .hide-gloss .pair .ko{
+    opacity:0;
+    transition:opacity .12s ease;
+  }
+  .hide-gloss .term:hover .ko,
+  .hide-gloss .term:focus-within .ko,
+  .hide-gloss .phrase:hover .ko,
+  .hide-gloss .pair:hover .ko{opacity:1}
+
+  .empty-state{
+    padding:56px 0 20px;
+    color:var(--ink-3);
+    font-family:var(--mono);
+    font-size:12.5px;
+  }
+  .empty-state.hidden{display:none}
+
+  footer{
+    margin:56px 34px 0;
+    padding-top:18px;
+    border-top:1px solid var(--line);
+    font-family:var(--mono);
+    font-size:11px;
+    line-height:1.7;
+    color:var(--ink-3);
+  }
+
+  @media (max-width:900px){
+    .shell{grid-template-columns:minmax(0,1fr)}
+    .rail{display:none}
+    .terms{grid-template-columns:minmax(0,1fr)}
+    .masthead{padding:28px 20px 20px}
+    h1{font-size:30px}
+    .controls{padding:11px 20px}
+    .sec{padding:0 20px}
+    footer{margin:44px 20px 0}
+    .trace{display:none}
+  }
+  @media (prefers-reduced-motion:reduce){
+    *{transition:none !important}
+  }
+</style>
+
+<div class="shell">
+  <aside class="rail">
+    <div class="rail-mark">KSBNS</div>
+    <nav id="rail"></nav>
+  </aside>
+
+  <main>
+    <header class="masthead">
+      <div>
+        <p class="eyebrow">Korean Society for Brain and Neural Sciences</p>
+        <h1>학회 영어 어휘집</h1>
+        <p class="standfirst">발표를 듣고, 포스터 앞에서 질문하고, 논문을 쓰는 자리에서 실제로 오가는 표현만 골랐습니다. 영어 단어와 국문 대응어를 함께 실었고, 검색으로 바로 찾을 수 있습니다.</p>
+      </div>
+      <figure class="trace" aria-hidden="true">
+        <svg width="252" height="72" viewBox="0 0 252 72" role="img">
+          <line x1="6" y1="14" x2="246" y2="14" stroke="currentColor" stroke-width="1" stroke-dasharray="2 4" opacity=".22"/>
+          <line x1="6" y1="50" x2="246" y2="50" stroke="currentColor" stroke-width="1" stroke-dasharray="2 4" opacity=".22"/>
+          <path d="M6,50 L58,49 C68,48 70,16 78,14 C86,12 90,26 96,38 C100,46 103,59 110,58 C119,57 123,51 132,50 L246,50"
+                fill="none" stroke="var(--accent)" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round"/>
+          <text x="246" y="11" text-anchor="end" fill="currentColor" opacity=".5" style="font-family:var(--mono);font-size:9px">+40 mV</text>
+          <text x="246" y="63" text-anchor="end" fill="currentColor" opacity=".5" style="font-family:var(--mono);font-size:9px">−70 mV</text>
+          <line x1="150" y1="66" x2="176" y2="66" stroke="currentColor" stroke-width="1.4" opacity=".45"/>
+          <text x="180" y="69" fill="currentColor" opacity=".5" style="font-family:var(--mono);font-size:9px">2 ms</text>
+        </svg>
+        <figcaption>action potential · 활동전위</figcaption>
+      </figure>
+    </header>
+
+    <div class="controls">
+      <label class="search">
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+          <circle cx="7" cy="7" r="5" stroke="currentColor" stroke-width="1.5"/>
+          <path d="M11 11l4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+        </svg>
+        <input id="q" type="search" placeholder="영어·한국어로 검색 (예: patch, 가소성, LTP)" autocomplete="off" aria-label="어휘 검색">
+        <span class="kbd">/</span>
+      </label>
+      <button class="toggle" id="glossBtn" type="button" aria-pressed="false">뜻 가리기</button>
+      <span class="count" id="count"></span>
+    </div>
+
+    <div id="body"></div>
+    <p class="empty-state hidden" id="empty">검색 결과가 없습니다.</p>
+
+    <footer>
+      KSBNS 학회 어휘집 · 학회 현장 · 연구 용어 · 연구자 생활 3부 구성<br>
+      “뜻 가리기”를 켜면 국문 뜻이 감춰지고, 항목에 커서를 올리면 다시 보입니다 — 자가 점검용입니다.
+    </footer>
+  </main>
+</div>
+
+<script>
+const DATA = [
+ {group:"학회 현장", en:"At the meeting", sections:[
+
+  {id:"logistics", ko:"학회 운영 · 일정", en:"Conference logistics", kind:"terms", items:[
+   ["call for abstracts","초록 모집 공고","보통 학회 3–4개월 전"],
+   ["abstract submission","초록 제출"],
+   ["deadline extension","마감 연장"],
+   ["notification of acceptance","채택 통보"],
+   ["registration","등록"],
+   ["early-bird registration","사전 할인 등록"],
+   ["on-site registration","현장 등록"],
+   ["venue","행사 장소"],
+   ["plenary lecture","전체 강연","모든 참가자 대상, 대개 대가급 연사"],
+   ["keynote speech","기조 강연"],
+   ["symposium","심포지엄","주제별 초청 연자 세션"],
+   ["oral session / podium presentation","구두 발표 세션"],
+   ["poster session","포스터 세션"],
+   ["flash talk / lightning talk","초단시간 발표","포스터 홍보용 1–3분"],
+   ["satellite symposium","위성 심포지엄","본 학회 전후 부대 행사"],
+   ["luncheon seminar","오찬 세미나"],
+   ["session chair / moderator","좌장"],
+   ["discussant","지정 토론자"],
+   ["exhibition booth","전시 부스","장비·시약 회사"],
+   ["networking reception","네트워킹 리셉션"],
+   ["banquet","만찬"],
+   ["travel award","여비 지원상"],
+   ["young investigator award","신진연구자상"],
+   ["program book / abstract book","프로그램집 / 초록집"],
+   ["badge, lanyard","명찰, 목걸이줄"],
+   ["certificate of attendance","참가 확인서"],
+   ["biosketch","약력","연자 소개용"]
+  ]},
+
+  {id:"presentation", ko:"발표 준비 · 진행", en:"Presentation", kind:"terms", items:[
+   ["slide deck","발표 슬라이드 묶음"],
+   ["poster board","포스터 보드"],
+   ["easel","이젤"],
+   ["push pins","압정"],
+   ["laser pointer / clicker","레이저 포인터 / 리모컨"],
+   ["handout","유인물"],
+   ["outline / roadmap slide","발표 개요 슬라이드"],
+   ["disclosure / conflict of interest (COI)","이해관계 고지"],
+   ["acknowledgments","감사의 글"],
+   ["funding source","연구비 출처"],
+   ["take-home message","핵심 메시지"],
+   ["scale bar","축척 막대","현미경 이미지"],
+   ["error bar (mean ± SEM)","오차 막대"],
+   ["representative image / trace","대표 이미지 / 대표 파형"],
+   ["schematic / cartoon","모식도"],
+   ["inset","확대 삽입 그림"],
+   ["legend","범례"],
+   ["take a question from the floor","청중 질문을 받다"],
+   ["run over time","시간을 초과하다"]
+  ]},
+
+  {id:"talk-phrases", ko:"발표 중 쓰는 문장", en:"Giving a talk", kind:"phrases", items:[
+   ["“Thank you for the kind introduction.”","소개 감사합니다."],
+   ["“Today I’d like to share our recent work on …”","오늘 …에 대한 최근 연구를 소개하려 합니다."],
+   ["“As you can see here, …” / “This panel shows …”","보시다시피 … / 이 패널은 …를 보여줍니다."],
+   ["“To address this question, we asked whether …”","이 질문에 답하기 위해 …인지를 확인했습니다."],
+   ["“Taken together, these data suggest that …”","종합하면, 이 결과는 …를 시사합니다."],
+   ["“I’ll be happy to take questions.”","질문 받겠습니다."]
+  ]},
+
+  {id:"qa-phrases", ko:"질문하고 답하기", en:"Q&A", kind:"phrases", items:[
+   ["“Thanks for the great talk. I have a quick question about …”","좋은 발표 감사합니다. …에 대해 간단히 여쭙겠습니다."],
+   ["“Did you control for …?”","…를 통제하셨나요?"],
+   ["“Have you tried an orthogonal approach?”","독립적인 다른 방법으로도 검증하셨나요?"],
+   ["“How many animals is that?” / “What’s your n?”","표본 수가 얼마인가요?"],
+   ["“That’s a great point — we’re currently working on that.”","좋은 지적입니다 — 현재 진행 중인 부분입니다."],
+   ["“I’m not sure I follow. Could you rephrase the question?”","질문을 잘 이해하지 못했습니다. 다시 말씀해 주시겠어요?"],
+   ["“We haven’t tested that directly, but our prediction would be …”","직접 검증하진 않았지만, 예상으로는 …"]
+  ]}
+ ]},
+
+ {group:"연구 용어", en:"The science", sections:[
+
+  {id:"anatomy", ko:"신경해부", en:"Neuroanatomy", kind:"terms", items:[
+   ["cortex","피질"],
+   ["prefrontal cortex (PFC)","전전두피질"],
+   ["hippocampus","해마"],
+   ["dentate gyrus","치상회"],
+   ["CA1 / CA3","해마 CA1 / CA3 영역"],
+   ["entorhinal cortex","내후각피질"],
+   ["amygdala","편도체"],
+   ["striatum","선조체"],
+   ["nucleus accumbens (NAc)","측좌핵"],
+   ["thalamus","시상"],
+   ["hypothalamus","시상하부"],
+   ["cerebellum","소뇌"],
+   ["brainstem","뇌간"],
+   ["ventral tegmental area (VTA)","복측피개영역"],
+   ["substantia nigra","흑질"],
+   ["locus coeruleus","청반"],
+   ["dorsal raphe","등쪽솔기핵"],
+   ["corpus callosum","뇌량"],
+   ["gray matter / white matter","회백질 / 백질"],
+   ["ventricle","뇌실"],
+   ["meninges","수막"],
+   ["blood-brain barrier (BBB)","혈뇌장벽"],
+   ["rostral / caudal","문측 / 미측"],
+   ["dorsal / ventral","배측 / 복측"],
+   ["medial / lateral","내측 / 외측"],
+   ["ipsilateral / contralateral","동측 / 반대측"],
+   ["coronal / sagittal / horizontal section","관상 / 시상 / 수평 절편"],
+   ["bregma","브레그마","정위수술 좌표 기준점"]
+  ]},
+
+  {id:"cellular", ko:"세포 · 시냅스", en:"Cellular", kind:"terms", items:[
+   ["neuron","뉴런"],
+   ["glia","교세포"],
+   ["astrocyte","성상교세포"],
+   ["microglia","미세아교세포"],
+   ["oligodendrocyte","희소돌기아교세포"],
+   ["myelin","수초"],
+   ["node of Ranvier","랑비에 결절"],
+   ["soma","세포체"],
+   ["axon","축삭"],
+   ["axon terminal / bouton","축삭 종말"],
+   ["dendrite","수상돌기"],
+   ["dendritic spine","수상돌기 가시"],
+   ["synapse","시냅스"],
+   ["presynaptic / postsynaptic","시냅스 전 / 시냅스 후"],
+   ["synaptic cleft","시냅스 틈"],
+   ["synaptic vesicle","시냅스 소포"],
+   ["active zone","활성대"],
+   ["postsynaptic density (PSD)","시냅스후 치밀질"],
+   ["pyramidal neuron","추체세포"],
+   ["interneuron","사이신경세포"],
+   ["projection neuron","투사신경세포"],
+   ["excitatory / inhibitory","흥분성 / 억제성"],
+   ["E/I balance","흥분–억제 균형"],
+   ["neurogenesis","신경발생"],
+   ["synaptogenesis","시냅스 형성"],
+   ["pruning","가지치기"]
+  ]},
+
+  {id:"ephys", ko:"전기생리", en:"Electrophysiology", kind:"terms", items:[
+   ["action potential","활동전위"],
+   ["membrane potential","막전위"],
+   ["resting potential","안정막전위"],
+   ["depolarization / hyperpolarization","탈분극 / 과분극"],
+   ["threshold","역치"],
+   ["refractory period","불응기"],
+   ["EPSP / IPSP","흥분성 / 억제성 시냅스후 전위"],
+   ["mEPSC / sEPSC","미세 / 자발 흥분성 시냅스후 전류"],
+   ["patch clamp","패치클램프"],
+   ["whole-cell recording","전세포 기록"],
+   ["voltage clamp / current clamp","전압 고정 / 전류 고정"],
+   ["input resistance","입력저항"],
+   ["conductance","전도도"],
+   ["driving force","구동력"],
+   ["rheobase","기저전류"],
+   ["local field potential (LFP)","국소장전위"],
+   ["spike train","스파이크 열"],
+   ["firing rate","발화율"],
+   ["burst","연발 발화"],
+   ["oscillation","진동"],
+   ["theta / gamma rhythm","세타 / 감마 리듬"],
+   ["sharp-wave ripple","예파–잔물결"],
+   ["paired-pulse ratio (PPR)","쌍펄스 비"],
+   ["current–voltage (I–V) curve","전류–전압 곡선"]
+  ]},
+
+  {id:"plasticity", ko:"시냅스 가소성", en:"Plasticity", kind:"terms", items:[
+   ["long-term potentiation (LTP)","장기강화"],
+   ["long-term depression (LTD)","장기억압"],
+   ["short-term facilitation / depression","단기 촉진 / 억압"],
+   ["spike-timing-dependent plasticity (STDP)","스파이크 타이밍 의존 가소성"],
+   ["homeostatic plasticity","항상성 가소성"],
+   ["synaptic scaling","시냅스 스케일링"],
+   ["silent synapse","침묵 시냅스"],
+   ["receptor trafficking","수용체 이동"],
+   ["exocytosis / endocytosis","세포외 유출 / 세포내 이입"],
+   ["quantal content","양자 함량"],
+   ["readily releasable pool (RRP)","즉시 방출 가능 소포군"],
+   ["release probability","방출 확률"],
+   ["metaplasticity","메타가소성"],
+   ["engram","기억 흔적 (세포)"]
+  ]},
+
+  {id:"neurotransmission", ko:"신경전달 · 수용체", en:"Neurotransmission", kind:"terms", items:[
+   ["glutamate","글루탐산"],
+   ["GABA","감마아미노뷰티르산"],
+   ["dopamine","도파민"],
+   ["serotonin (5-HT)","세로토닌"],
+   ["acetylcholine","아세틸콜린"],
+   ["norepinephrine","노르에피네프린"],
+   ["neuropeptide","신경펩타이드"],
+   ["AMPA / NMDA / kainate receptor","이온성 글루탐산 수용체"],
+   ["mGluR","대사성 글루탐산 수용체"],
+   ["GABA-A / GABA-B receptor","GABA 수용체"],
+   ["ionotropic / metabotropic","이온성 / 대사성"],
+   ["GPCR","G단백질연결수용체"],
+   ["ion channel","이온채널"],
+   ["transporter","수송체"],
+   ["reuptake","재흡수"],
+   ["agonist / antagonist","작용제 / 길항제"],
+   ["partial agonist","부분 작용제"],
+   ["allosteric modulator","알로스테릭 조절제"],
+   ["desensitization","탈감작"],
+   ["second messenger","2차 전령","cAMP, IP3 등"],
+   ["calcium influx","칼슘 유입"]
+  ]},
+
+  {id:"molecular", ko:"분자 · 유전 기법", en:"Molecular", kind:"terms", items:[
+   ["gene expression","유전자 발현"],
+   ["transcription / translation","전사 / 번역"],
+   ["knockout (KO) / knock-in","녹아웃 / 녹인"],
+   ["conditional knockout","조건부 녹아웃"],
+   ["floxed allele","loxP 삽입 대립유전자"],
+   ["Cre-loxP system","Cre-loxP 시스템"],
+   ["CRISPR/Cas9","크리스퍼 유전자 편집"],
+   ["viral vector","바이러스 벡터"],
+   ["AAV","아데노 연관 바이러스"],
+   ["lentivirus","렌티바이러스"],
+   ["transfection / transduction","형질주입 / 형질도입"],
+   ["overexpression","과발현"],
+   ["knockdown","발현 억제"],
+   ["siRNA / shRNA","소간섭 / 짧은 헤어핀 RNA"],
+   ["reporter gene","리포터 유전자"],
+   ["immunohistochemistry (IHC)","면역조직화학"],
+   ["immunofluorescence (IF)","면역형광"],
+   ["in situ hybridization","제자리 부합화"],
+   ["Western blot","웨스턴 블롯"],
+   ["co-immunoprecipitation (co-IP)","공동 면역침강"],
+   ["qPCR","정량 중합효소연쇄반응"],
+   ["RNA-seq","전사체 시퀀싱"],
+   ["single-cell RNA-seq (scRNA-seq)","단일세포 전사체"],
+   ["spatial transcriptomics","공간 전사체"],
+   ["proteomics","단백체학"],
+   ["phosphorylation","인산화"],
+   ["ubiquitination","유비퀴틴화"],
+   ["promoter","프로모터"],
+   ["cell-type-specific","세포 유형 특이적"]
+  ]},
+
+  {id:"techniques", ko:"시스템 · 이미징 기법", en:"Techniques", kind:"terms", items:[
+   ["optogenetics","광유전학"],
+   ["channelrhodopsin (ChR2)","채널로돕신"],
+   ["halorhodopsin","할로로돕신"],
+   ["chemogenetics / DREADDs","화학유전학"],
+   ["CNO","DREADD 리간드"],
+   ["fiber photometry","광섬유 형광 측정"],
+   ["calcium imaging","칼슘 이미징"],
+   ["GCaMP","유전자 코딩 칼슘 지시자"],
+   ["two-photon microscopy","이광자 현미경"],
+   ["miniscope","두부장착 소형 현미경"],
+   ["confocal microscopy","공초점 현미경"],
+   ["super-resolution imaging","초해상도 이미징"],
+   ["electron microscopy (EM)","전자현미경"],
+   ["tissue clearing","조직 투명화","CLARITY · iDISCO"],
+   ["stereotaxic surgery","정위 수술"],
+   ["cannula","캐뉼라"],
+   ["microdialysis","미세투석"],
+   ["anterograde / retrograde tracing","순행성 / 역행성 추적"],
+   ["rabies virus tracing","광견병 바이러스 추적"],
+   ["connectomics","커넥토믹스"],
+   ["silicon probe / Neuropixels","고밀도 전극"],
+   ["EEG / MEG","뇌파 / 뇌자도"],
+   ["fMRI, BOLD signal","기능적 자기공명영상, 혈중산소 신호"],
+   ["resting-state functional connectivity","휴지기 기능적 연결성"],
+   ["DTI","확산텐서영상"],
+   ["PET","양전자단층촬영"],
+   ["TMS / tDCS","경두개 자기 / 직류 자극"],
+   ["deep brain stimulation (DBS)","뇌심부자극술"],
+   ["organoid","오가노이드"],
+   ["iPSC","유도만능줄기세포"],
+   ["acute slice","급성 절편"],
+   ["primary culture","1차 배양"],
+   ["head-fixed / freely moving","머리 고정 / 자유행동"]
+  ]},
+
+  {id:"behavior", ko:"행동 실험", en:"Behavior", kind:"terms", items:[
+   ["behavioral paradigm / assay","행동 패러다임"],
+   ["open field test","개방장 검사"],
+   ["elevated plus maze","고가십자미로"],
+   ["Morris water maze","모리스 수중미로"],
+   ["fear conditioning","공포 조건화"],
+   ["extinction","소거"],
+   ["reinstatement","재발"],
+   ["novel object recognition","신물체 인식"],
+   ["three-chamber social test","3방 사회성 검사"],
+   ["forced swim test / tail suspension test","강제수영 / 꼬리매달기 검사"],
+   ["operant conditioning","조작적 조건화"],
+   ["lever press","레버 누르기"],
+   ["reward / reinforcement","보상 / 강화"],
+   ["conditioned place preference (CPP)","조건화 장소 선호"],
+   ["self-administration","자가 투여"],
+   ["habituation / sensitization","습관화 / 민감화"],
+   ["latency","잠복기"],
+   ["locomotor activity","운동 활성"],
+   ["anhedonia","무쾌감증"],
+   ["working memory / spatial memory","작업기억 / 공간기억"],
+   ["consolidation / reconsolidation","공고화 / 재공고화"],
+   ["retrieval","인출"]
+  ]},
+
+  {id:"disease", ko:"뇌질환", en:"Brain disorders", kind:"terms", items:[
+   ["neurodegeneration","신경퇴행"],
+   ["Alzheimer’s disease","알츠하이머병"],
+   ["amyloid-beta plaque","아밀로이드 베타 플라크"],
+   ["neurofibrillary tangle","신경섬유매듭"],
+   ["tau pathology","타우 병리"],
+   ["Parkinson’s disease","파킨슨병"],
+   ["alpha-synuclein / Lewy body","알파시누클레인 / 루이소체"],
+   ["Huntington’s disease","헌팅턴병"],
+   ["ALS","근위축성 측삭경화증"],
+   ["epilepsy / seizure","뇌전증 / 발작"],
+   ["stroke / ischemia","뇌졸중 / 허혈"],
+   ["traumatic brain injury (TBI)","외상성 뇌손상"],
+   ["autism spectrum disorder (ASD)","자폐스펙트럼장애"],
+   ["schizophrenia","조현병"],
+   ["major depressive disorder","주요우울장애"],
+   ["anxiety disorder","불안장애"],
+   ["addiction / substance use disorder","중독"],
+   ["chronic pain","만성통증"],
+   ["neuroinflammation","신경염증"],
+   ["excitotoxicity","흥분독성"],
+   ["apoptosis","세포자멸사"],
+   ["oxidative stress","산화 스트레스"],
+   ["etiology","병인"],
+   ["pathogenesis","발병기전"],
+   ["comorbidity","동반질환"],
+   ["biomarker","생체표지자"],
+   ["therapeutic target","치료 표적"],
+   ["preclinical / clinical trial","전임상 / 임상시험"],
+   ["disease model","질환 모델"]
+  ]}
+ ]},
+
+ {group:"연구자 생활", en:"Research life", sections:[
+
+  {id:"stats", ko:"통계 · 데이터", en:"Statistics", kind:"terms", items:[
+   ["statistically significant","통계적으로 유의한"],
+   ["p-value","유의확률"],
+   ["effect size","효과 크기"],
+   ["t-test","t-검정"],
+   ["one-way / two-way ANOVA","일원 / 이원 분산분석"],
+   ["repeated-measures ANOVA","반복측정 분산분석"],
+   ["post hoc test","사후 검정"],
+   ["multiple comparison correction","다중비교 보정","Bonferroni · Tukey"],
+   ["Mann–Whitney U test","만–휘트니 U 검정"],
+   ["chi-square test","카이제곱 검정"],
+   ["mixed-effects model","혼합효과모형"],
+   ["SEM vs SD","평균의 표준오차 vs 표준편차"],
+   ["confidence interval","신뢰구간"],
+   ["linear regression","선형회귀"],
+   ["sample size / power analysis","표본 크기 / 검정력 분석"],
+   ["blinding","맹검"],
+   ["randomization","무작위 배정"],
+   ["outlier","이상치"],
+   ["biological / technical replicate","생물학적 / 기술적 반복"],
+   ["reproducibility","재현성"],
+   ["normalization","정규화"],
+   ["baseline","기저값"],
+   ["trend toward significance","유의성 경향","심사에서 자주 지적되는 표현"]
+  ]},
+
+  {id:"publishing", ko:"논문 · 연구비 · 커리어", en:"Publishing & career", kind:"terms", items:[
+   ["manuscript","원고"],
+   ["submission","투고"],
+   ["under review","심사 중"],
+   ["major / minor revision","대폭 / 소폭 수정"],
+   ["rebuttal letter","반박 서한"],
+   ["reviewer comment","심사평"],
+   ["desk reject","편집장 반려"],
+   ["galley proof","교정쇄"],
+   ["preprint / bioRxiv","사전 출판"],
+   ["impact factor","피인용지수"],
+   ["corresponding author","교신저자"],
+   ["first author / co-first author","제1저자 / 공동 제1저자"],
+   ["principal investigator (PI)","연구책임자"],
+   ["postdoc","박사후연구원"],
+   ["graduate student","대학원생"],
+   ["tenure-track","정년트랙"],
+   ["grant proposal","연구계획서"],
+   ["funding agency","연구비 지원기관"],
+   ["NRF","한국연구재단"],
+   ["IRB","기관생명윤리위원회"],
+   ["IACUC","동물실험윤리위원회"],
+   ["animal ethics approval","동물실험 승인"],
+   ["MTA","물질이전계약"],
+   ["collaboration","공동연구"],
+   ["co-authorship","공저"],
+   ["plagiarism","표절"]
+  ]},
+
+  {id:"verbs", ko:"학술 동사 · 표현", en:"Academic verbs", kind:"terms", items:[
+   ["elucidate","규명하다"],
+   ["delineate","상세히 밝히다"],
+   ["dissect","세분해 분석하다"],
+   ["underlie","~의 기저에 있다","the mechanism underlying X"],
+   ["mediate","매개하다"],
+   ["modulate","조절하다"],
+   ["be implicated in","~에 관여한다고 알려져 있다"],
+   ["abolish","완전히 없애다"],
+   ["attenuate","약화시키다"],
+   ["ameliorate","개선하다"],
+   ["rescue (a phenotype)","(표현형을) 회복시키다"],
+   ["recapitulate","(모델이 질환 특징을) 재현하다"],
+   ["perturb","교란하다"],
+   ["probe","탐침하다, 파고들다"],
+   ["ablate","제거하다","세포 · 회로"],
+   ["upregulate / downregulate","상향 / 하향 조절하다"],
+   ["account for","설명하다, ~의 원인이 되다"],
+   ["dissociate A from B","A와 B를 분리해 구분하다"],
+   ["necessary and sufficient","필요충분한","인과 입증의 황금 기준"],
+   ["converging evidence","수렴하는 증거"],
+   ["orthogonal approach","독립적인 다른 접근법"],
+   ["robust / marginal","견고한 / 미미한"],
+   ["in line with / consistent with","~와 일치하는"],
+   ["contrary to / at odds with","~와 상반되는"],
+   ["caveat / limitation","유의점 / 한계"],
+   ["beyond the scope of this study","본 연구의 범위를 넘어서는"]
+  ]},
+
+  {id:"paper-phrases", ko:"논문에 쓰는 문장", en:"Writing the paper", kind:"phrases", items:[
+   ["“Here we show that …”","본 연구에서 우리는 …를 보인다."],
+   ["“We hypothesized that X would …”","우리는 X가 …할 것이라 가설을 세웠다."],
+   ["“To test this, we performed …”","이를 검증하기 위해 …를 수행했다."],
+   ["“Consistent with this idea, …”","이 견해와 일치하게, …"],
+   ["“These results indicate that X is required for Y.”","이 결과는 X가 Y에 필요함을 나타낸다."],
+   ["“However, whether X is sufficient remains unclear.”","다만 X가 충분한지는 여전히 불분명하다."],
+   ["“Our findings provide a mechanistic link between X and Y.”","본 결과는 X와 Y를 잇는 기전적 연결을 제시한다."]
+  ]},
+
+  {id:"networking", ko:"네트워킹", en:"Networking", kind:"phrases", items:[
+   ["“Hi, I’m 〇〇 from 〇〇 University. I work on hippocampal circuits.”","안녕하세요, 〇〇대학 〇〇입니다. 해마 회로를 연구합니다."],
+   ["“I really enjoyed your talk — especially the part about …”","발표 정말 흥미로웠습니다 — 특히 … 부분이요."],
+   ["“Are you presenting a poster? I’d love to stop by.”","포스터 발표하시나요? 들러보고 싶습니다."],
+   ["“Would you mind if I emailed you about this?”","이 건으로 메일 드려도 될까요?"],
+   ["“Do you have a card, by any chance?”","혹시 명함 있으신가요?"],
+   ["“We’re actually working on something similar — maybe we could collaborate.”","저희도 비슷한 연구를 하고 있는데, 함께 해봐도 좋겠습니다."],
+   ["“Are you going to the banquet tonight?”","오늘 저녁 만찬 가시나요?"],
+   ["“It was great meeting you. Let’s keep in touch.”","만나서 반가웠습니다. 연락 이어가시죠."]
+  ]},
+
+  {id:"confusable", ko:"헷갈리는 짝", en:"Commonly confused", kind:"pairs", items:[
+   ["efficacy vs potency","최대 효과의 크기 vs 효과를 내는 데 필요한 농도"],
+   ["specificity vs selectivity","오직 그것만 결합 vs 상대적으로 더 잘 결합"],
+   ["necessary vs sufficient","없애면 사라짐 vs 켜면 나타남"],
+   ["correlate with vs cause","심사자가 가장 자주 지적하는 구분"],
+   ["significant","학술 문맥에서는 “중요한”이 아니라 “통계적으로 유의한”"],
+   ["data are","data는 복수 취급이 관례 — these data suggest"],
+   ["in vivo / in vitro / ex vivo / in situ","생체 내 / 시험관 / 생체 밖 조직 / 원위치"]
+  ]}
+ ]}
+];
+
+const esc = s => s.replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+
+const bodyEl = document.getElementById("body");
+const railEl = document.getElementById("rail");
+const countEl = document.getElementById("count");
+const emptyEl = document.getElementById("empty");
+const qEl = document.getElementById("q");
+
+let total = 0;
+const secEls = [];
+
+DATA.forEach(g => {
+  const nav = document.createElement("div");
+  nav.className = "rail-group";
+  nav.innerHTML = "<h2>" + esc(g.group) + "</h2>";
+  const ul = document.createElement("ul");
+  nav.appendChild(ul);
+  railEl.appendChild(nav);
+
+  g.sections.forEach(s => {
+    const li = document.createElement("li");
+    const a = document.createElement("a");
+    a.href = "#" + s.id;
+    a.textContent = s.ko;
+    li.appendChild(a);
+    ul.appendChild(li);
+
+    const sec = document.createElement("section");
+    sec.className = "sec";
+    sec.id = s.id;
+
+    const head = document.createElement("div");
+    head.className = "sec-head";
+    head.innerHTML =
+      "<h3>" + esc(s.ko) + "</h3>" +
+      "<span class='en-name'>" + esc(s.en) + "</span>" +
+      "<span class='n'>" + s.items.length + "</span>";
+    sec.appendChild(head);
+
+    const list = document.createElement("div");
+    list.className = s.kind === "terms" ? "terms" : (s.kind === "phrases" ? "phrases" : "pairs");
+
+    const itemEls = [];
+    s.items.forEach(it => {
+      const el = document.createElement("div");
+      el.className = s.kind === "terms" ? "term" : (s.kind === "phrases" ? "phrase" : "pair");
+      el._en = it[0];
+      el._ko = it[1] || "";
+      el._note = it[2] || "";
+      el._hay = (el._en + " " + el._ko + " " + el._note).toLowerCase();
+      itemEls.push(el);
+      list.appendChild(el);
+      total++;
+    });
+
+    sec.appendChild(list);
+    bodyEl.appendChild(sec);
+    secEls.push({sec, head, link: a, itemEls, count: head.querySelector(".n")});
+  });
+});
+
+function paint(el, re){
+  const wrap = t => re ? esc(t).replace(re, m => "<mark>" + m + "</mark>") : esc(t);
+  let html = "<div class='en'>" + wrap(el._en) + "</div>";
+  if (el._ko) html += "<div class='ko'>" + wrap(el._ko) + "</div>";
+  if (el._note) html += "<div class='note'>" + wrap(el._note) + "</div>";
+  el.innerHTML = html;
+}
+
+function filter(raw){
+  const q = raw.trim().toLowerCase();
+  const re = q ? new RegExp(q.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "gi") : null;
+  let shown = 0;
+
+  secEls.forEach(({sec, link, itemEls, count}) => {
+    let n = 0;
+    itemEls.forEach(el => {
+      const hit = !q || el._hay.includes(q);
+      el.classList.toggle("hidden", !hit);
+      if (hit){ paint(el, re); n++; }
+    });
+    count.textContent = n;
+    sec.classList.toggle("hidden", n === 0);
+    link.classList.toggle("empty", n === 0);
+    shown += n;
+  });
+
+  emptyEl.classList.toggle("hidden", shown > 0);
+  countEl.textContent = q ? shown + " / " + total + " 항목" : total + " 항목 · 16 분류";
+}
+
+filter("");
+qEl.addEventListener("input", e => filter(e.target.value));
+
+document.addEventListener("keydown", e => {
+  if (e.key === "/" && document.activeElement !== qEl){
+    e.preventDefault();
+    qEl.focus();
+    qEl.select();
+  }
+  if (e.key === "Escape" && document.activeElement === qEl){
+    qEl.value = "";
+    filter("");
+    qEl.blur();
+  }
+});
+
+const glossBtn = document.getElementById("glossBtn");
+let hidden = false;
+try { hidden = localStorage.getItem("ksbns-gloss") === "1"; } catch(err) {}
+function applyGloss(){
+  document.body.classList.toggle("hide-gloss", hidden);
+  glossBtn.setAttribute("aria-pressed", String(hidden));
+  glossBtn.textContent = hidden ? "뜻 보이기" : "뜻 가리기";
+}
+applyGloss();
+glossBtn.addEventListener("click", () => {
+  hidden = !hidden;
+  applyGloss();
+  try { localStorage.setItem("ksbns-gloss", hidden ? "1" : "0"); } catch(err) {}
+});
+
+// highlight the section currently in view
+const obs = new IntersectionObserver(entries => {
+  entries.forEach(en => {
+    const rec = secEls.find(s => s.sec === en.target);
+    if (rec && en.isIntersecting){
+      secEls.forEach(s => s.link.classList.remove("on"));
+      rec.link.classList.add("on");
+    }
+  });
+}, {rootMargin:"-15% 0px -75% 0px"});
+secEls.forEach(s => obs.observe(s.sec));
+</script>

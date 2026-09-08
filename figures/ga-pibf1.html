@@ -1,0 +1,280 @@
+<title>Pibf1 섬모 결손 그래픽 초록</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600&family=Nanum+Myeongjo:wght@400;700&family=IBM+Plex+Sans+KR:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+  *{box-sizing:border-box}
+  :root{
+    --bg:#EDF0F3; --board:#FFFFFF; --panel:#F5F8F9; --panel2:#FAFBFC;
+    --ink:#0E141A; --ink-soft:#3B4753; --muted:#6D7A87;
+    --rule:#D9E0E6; --rule-soft:#E9EEF1;
+    --cilia:#C21E6A; --glia:#0E7887; --ask:#9A5B00;
+    --cilia-wash:#FCEEF4; --glia-wash:#E9F5F6; --ask-wash:#FBF3E4;
+  }
+  @media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+    --bg:#070A0D; --board:#111820; --panel:#171F27; --panel2:#141B22;
+    --ink:#ECF1F5; --ink-soft:#BCC8D3; --muted:#8494A2;
+    --rule:#25303A; --rule-soft:#1D252D;
+    --cilia:#FF6BAA; --glia:#4FC8D8; --ask:#E5A63C;
+    --cilia-wash:#2A1420; --glia-wash:#0E2429; --ask-wash:#2A2113;
+  }}
+  :root[data-theme="dark"]{
+    --bg:#070A0D; --board:#111820; --panel:#171F27; --panel2:#141B22;
+    --ink:#ECF1F5; --ink-soft:#BCC8D3; --muted:#8494A2;
+    --rule:#25303A; --rule-soft:#1D252D;
+    --cilia:#FF6BAA; --glia:#4FC8D8; --ask:#E5A63C;
+    --cilia-wash:#2A1420; --glia-wash:#0E2429; --ask-wash:#2A2113;
+  }
+  body{background:var(--bg);color:var(--ink);font-family:"IBM Plex Sans KR",system-ui,sans-serif;
+    display:flex;justify-content:center;padding:24px;margin:0}
+  .sheet{width:1760px;height:1010px;background:var(--board);border:1px solid var(--rule);
+    padding:40px 48px 34px;display:flex;flex-direction:column;gap:22px;position:relative;overflow:hidden}
+  .sheet::before{content:"";position:absolute;top:0;left:0;right:0;height:5px;
+    background:linear-gradient(90deg,var(--cilia) 0 46%,var(--ask) 46% 54%,var(--glia) 54% 100%)}
+
+  .top{display:flex;justify-content:space-between;align-items:flex-end;gap:40px;
+    border-bottom:1px solid var(--rule);padding-bottom:20px}
+  .eyebrow{font-family:"IBM Plex Mono",monospace;font-size:13px;letter-spacing:.24em;
+    text-transform:uppercase;color:var(--cilia);margin-bottom:11px}
+  h1{margin:0;font-family:Newsreader,"Nanum Myeongjo",serif;font-weight:500;font-size:39px;
+    line-height:1.32;letter-spacing:-.01em;max-width:1230px;text-wrap:balance}
+  h1 .n{color:var(--cilia)} h1 .a{color:var(--glia)} h1 .q{color:var(--ask)}
+  .stamp{font-family:"IBM Plex Mono",monospace;font-size:12px;line-height:1.9;letter-spacing:.08em;
+    color:var(--muted);text-align:right;white-space:nowrap}
+  .stamp b{display:block;color:var(--ink-soft);font-weight:500;font-size:13px;letter-spacing:.14em}
+
+  .flow{display:grid;grid-template-columns:292px 34px 366px 62px 1fr;flex:1;min-height:0;align-items:stretch}
+  .arrow{display:flex;align-items:center;justify-content:center;color:var(--rule)}
+  .arrow svg{width:26px;height:26px}
+  .col{display:flex;flex-direction:column;gap:12px;min-width:0}
+  .stage{font-family:"IBM Plex Mono",monospace;font-size:11.5px;letter-spacing:.2em;
+    text-transform:uppercase;color:var(--muted);display:flex;gap:10px;align-items:center;height:16px}
+  .stage::after{content:"";flex:1;height:1px;background:var(--rule-soft)}
+  .card{background:var(--panel);border:1px solid var(--rule-soft);padding:16px 18px;
+    display:flex;flex-direction:column;gap:12px;flex:1;min-height:0}
+  .viz{flex:1;min-height:0;display:flex}
+  .viz svg{width:100%;height:100%}
+  .card h3{margin:0;font-size:18px;font-weight:600;line-height:1.45}
+  .card p{margin:0;font-size:13.5px;line-height:1.68;color:var(--ink-soft)}
+  .card p b{font-weight:600;color:var(--ink)}
+  .mono{font-family:"IBM Plex Mono",monospace;font-size:11.5px;line-height:1.75;color:var(--muted)}
+  .lineage{display:grid;grid-template-columns:auto 1fr;gap:3px 10px;font-family:"IBM Plex Mono",monospace;
+    font-size:11.5px;color:var(--muted);line-height:1.7}
+  .lineage .y{color:var(--cilia)}
+
+  /* branch point */
+  .branch{display:flex;align-items:center;justify-content:center}
+  .branch span{background:var(--ask-wash);color:var(--ask);border:1.6px solid var(--ask);
+    width:48px;height:48px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+    font-family:Newsreader,serif;font-size:27px;font-weight:600;line-height:1}
+
+  .fork{display:grid;grid-template-rows:16px 1fr 1fr;gap:12px;min-width:0;min-height:0}
+  .route{border:1px solid var(--rule-soft);padding:16px 20px;display:grid;
+    grid-template-columns:212px 1fr;gap:22px;align-items:center;min-height:0}
+  .route.n{background:var(--cilia-wash);border-left:4px solid var(--cilia)}
+  .route.a{background:var(--glia-wash);border-left:4px solid var(--glia)}
+  .route .rviz{height:100%;display:flex;align-items:center}
+  .route .rviz svg{width:100%;height:100%;max-height:200px}
+  .route .tag{font-family:"IBM Plex Mono",monospace;font-size:11px;letter-spacing:.18em;
+    text-transform:uppercase;margin-bottom:8px}
+  .route.n .tag{color:var(--cilia)} .route.a .tag{color:var(--glia)}
+  .route h3{margin:0 0 9px;font-size:21px;font-weight:600;line-height:1.4}
+  .route p{margin:0;font-size:14px;line-height:1.68;color:var(--ink-soft)}
+  .route p b{color:var(--ink);font-weight:600}
+  .route .mono{margin-top:11px}
+
+  .foot{display:grid;grid-template-columns:1fr auto;gap:32px;align-items:center;
+    border-top:1px solid var(--rule);padding-top:16px}
+  .outcome{display:flex;align-items:center;gap:20px;flex-wrap:wrap;font-size:13.5px;color:var(--ink-soft);line-height:1.6}
+  .outcome b{color:var(--ink);font-weight:600}
+  .chip{font-family:"IBM Plex Mono",monospace;font-size:11.5px;letter-spacing:.1em;
+    border:1px solid var(--rule);padding:5px 11px;color:var(--muted);white-space:nowrap}
+  .cred{font-family:"IBM Plex Mono",monospace;font-size:11.5px;letter-spacing:.09em;
+    color:var(--muted);text-align:right;line-height:1.85;font-variant-numeric:tabular-nums}
+  svg text{font-family:"IBM Plex Mono",monospace}
+</style>
+
+<div class="sheet">
+  <div class="top">
+    <div>
+      <div class="eyebrow">Research Question — Cilia &amp; Cognition</div>
+      <h1>전뇌에서 <span class="n">일차 섬모(<i>Pibf1</i>/<i>Cep90</i>)</span>가 사라질 때, 기억을 무너뜨리는 것은<br>
+        <span class="n">뉴런 자신의 회로 위축</span><span class="q">인가</span>,
+        <span class="a">성상교세포가 일으킨 신경염증</span><span class="q">인가?</span></h1>
+    </div>
+    <div class="stamp">
+      <b>NBD LAB · SEJONG UNIV.</b>
+      Joeun Seo · 2026<br>
+      <i>Emx1</i>-Cre ; <i>Pibf1</i><sup>fl/fl</sup>
+    </div>
+  </div>
+
+  <div class="flow">
+    <!-- 01 MODEL -->
+    <div class="col">
+      <div class="stage">01 · Model</div>
+      <div class="card">
+        <div class="viz">
+          <svg viewBox="0 0 250 132" aria-hidden="true">
+            <path d="M28 84 C22 50 46 24 92 22 C140 20 186 28 208 46 C226 60 224 82 210 90
+                     C190 102 150 105 104 103 C70 101 40 98 28 84 Z"
+                  fill="var(--panel2)" stroke="var(--rule)" stroke-width="1.6"/>
+            <path d="M36 72 C34 46 56 28 96 26 C140 24 182 33 202 48 C210 55 210 62 204 65
+                     C176 55 140 48 100 49 C68 50 44 59 36 72 Z"
+                  fill="var(--cilia)" fill-opacity=".16" stroke="var(--cilia)" stroke-width="1.6"/>
+            <path d="M92 75 C104 60 132 56 154 64 C166 68 170 77 164 84" fill="none"
+                  stroke="var(--cilia)" stroke-width="3.4" stroke-linecap="round"/>
+            <path d="M208 90 C226 85 234 68 226 57" fill="none" stroke="var(--rule)" stroke-width="1.6"/>
+            <text x="64" y="42" font-size="9.5" fill="var(--cilia)" letter-spacing=".08em">CORTEX</text>
+            <text x="108" y="95" font-size="9.5" fill="var(--cilia)" letter-spacing=".08em">HIPPOCAMPUS</text>
+            <text x="28" y="124" font-size="9.5" fill="var(--muted)" letter-spacing=".06em">Emx1 lineage · from E10.5</text>
+          </svg>
+        </div>
+        <h3>전뇌 특이적 조건부 결손</h3>
+        <p>배아 치사를 우회해 <b>성체 해마·피질</b>에서 섬모 기능을 처음으로 물을 수 있는 모델.</p>
+        <div class="lineage">
+          <span class="y">✓</span><span>흥분성 뉴런 (&gt;90%)</span>
+          <span class="y">✓</span><span>성상교세포 (~70–80%)</span>
+          <span>✕</span><span>GABA 인터뉴런 · 미세아교세포</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
+      stroke-linecap="round" stroke-linejoin="round"><path d="M4 12h15M13 6l6 6-6 6"/></svg></div>
+
+    <!-- 02 CELL BIOLOGY -->
+    <div class="col">
+      <div class="stage">02 · Cell biology</div>
+      <div class="card">
+        <div class="viz">
+          <svg viewBox="0 0 330 168" aria-hidden="true">
+            <text x="8" y="14" font-size="10.5" fill="var(--muted)" letter-spacing=".16em">CONTROL</text>
+            <text x="186" y="14" font-size="10.5" fill="var(--cilia)" letter-spacing=".16em">Pibf1 cKO</text>
+            <!-- WT -->
+            <ellipse cx="84" cy="90" rx="66" ry="48" fill="var(--panel2)" stroke="var(--rule)" stroke-width="1.6"/>
+            <circle cx="84" cy="100" r="23" fill="none" stroke="var(--rule)" stroke-width="1.4"/>
+            <g fill="var(--glia)" opacity=".85">
+              <circle cx="70" cy="62" r="2.6"/><circle cx="78" cy="56" r="2.6"/><circle cx="90" cy="57" r="2.6"/>
+              <circle cx="96" cy="65" r="2.6"/><circle cx="74" cy="69" r="2.6"/><circle cx="92" cy="73" r="2.6"/>
+            </g>
+            <rect x="78" y="46" width="4.5" height="12" fill="var(--ink-soft)"/>
+            <rect x="85" y="46" width="4.5" height="12" fill="var(--ink-soft)"/>
+            <path d="M83 46 C83 34 78 26 73 20" fill="none" stroke="var(--cilia)" stroke-width="3.6" stroke-linecap="round"/>
+            <text x="92" y="30" font-size="10" fill="var(--cilia)">ARL13B⁺ cilium</text>
+            <!-- cKO -->
+            <ellipse cx="252" cy="90" rx="66" ry="48" fill="var(--panel2)" stroke="var(--rule)" stroke-width="1.6"/>
+            <circle cx="252" cy="100" r="23" fill="none" stroke="var(--rule)" stroke-width="1.4"/>
+            <g fill="var(--glia)" opacity=".55">
+              <circle cx="212" cy="70" r="2.6"/><circle cx="234" cy="58" r="2.6"/><circle cx="276" cy="60" r="2.6"/>
+              <circle cx="292" cy="84" r="2.6"/><circle cx="222" cy="110" r="2.6"/><circle cx="280" cy="116" r="2.6"/>
+              <circle cx="256" cy="52" r="2.6"/><circle cx="206" cy="94" r="2.6"/>
+            </g>
+            <rect x="246" y="46" width="4.5" height="12" fill="var(--ink-soft)"/>
+            <rect x="253" y="46" width="4.5" height="12" fill="var(--ink-soft)"/>
+            <g stroke="var(--cilia)" stroke-width="2.8" stroke-linecap="round">
+              <path d="M242 40 L262 24"/><path d="M242 24 L262 40"/>
+            </g>
+            <text x="8" y="158" font-size="10" fill="var(--muted)">PCM1 위성 응집</text>
+            <text x="186" y="158" font-size="10" fill="var(--muted)">PCM1 분산 · 부속기 실패</text>
+          </svg>
+        </div>
+        <h3>섬모 형성 자체가 차단된다</h3>
+        <p>중심소체 위성 붕괴 → 섬모 소실 → 섬모 위에서만 일어나는
+           <b>Shh 신호 차단</b>.</p>
+        <svg viewBox="0 0 330 56" style="width:100%;height:56px;flex:none" aria-hidden="true">
+          <text x="0" y="12" font-size="10.5" fill="var(--muted)" letter-spacing=".1em">GLI3-FL</text>
+          <rect x="64" y="3" width="178" height="10" fill="var(--rule)"/>
+          <rect x="64" y="3" width="60" height="10" fill="var(--cilia)"/>
+          <text x="250" y="12" font-size="10.5" fill="var(--cilia)">↓ cKO</text>
+          <text x="0" y="37" font-size="10.5" fill="var(--muted)" letter-spacing=".1em">GLI3-R</text>
+          <rect x="64" y="28" width="178" height="10" fill="var(--rule)"/>
+          <rect x="64" y="28" width="152" height="10" fill="var(--cilia)"/>
+          <text x="250" y="37" font-size="10.5" fill="var(--cilia)">↑ cKO</text>
+          <text x="64" y="54" font-size="10" fill="var(--muted)">→ Gli1 / Ptch1 전사 감소</text>
+        </svg>
+      </div>
+    </div>
+
+    <div class="branch"><span>?</span></div>
+
+    <!-- 03 THE FORK -->
+    <div class="fork">
+      <div class="stage">03 · 경쟁하는 두 경로 — 이것이 질문이다</div>
+
+      <div class="route n">
+        <div class="rviz">
+          <svg viewBox="0 0 210 150" aria-hidden="true">
+            <text x="4" y="12" font-size="10" fill="var(--muted)" letter-spacing=".12em">CONTROL</text>
+            <text x="124" y="12" font-size="10" fill="var(--cilia)" letter-spacing=".12em">cKO</text>
+            <g stroke="var(--ink-soft)" stroke-width="1.9" fill="none" stroke-linecap="round">
+              <path d="M52 122 L52 78"/><path d="M52 78 L22 44"/><path d="M52 78 L82 44"/>
+              <path d="M52 78 L52 38"/><path d="M22 44 L10 28"/><path d="M22 44 L31 26"/>
+              <path d="M82 44 L94 28"/><path d="M82 44 L73 26"/><path d="M52 38 L43 24"/><path d="M52 38 L61 24"/>
+            </g>
+            <g fill="var(--cilia)">
+              <circle cx="16" cy="36" r="2.3"/><circle cx="28" cy="34" r="2.3"/><circle cx="88" cy="36" r="2.3"/>
+              <circle cx="76" cy="34" r="2.3"/><circle cx="46" cy="30" r="2.3"/><circle cx="57" cy="30" r="2.3"/>
+              <circle cx="36" cy="60" r="2.3"/><circle cx="68" cy="60" r="2.3"/>
+            </g>
+            <circle cx="52" cy="128" r="10" fill="var(--panel2)" stroke="var(--ink-soft)" stroke-width="1.9"/>
+            <g stroke="var(--ink-soft)" stroke-width="1.9" fill="none" stroke-linecap="round" opacity=".72">
+              <path d="M162 122 L162 88"/><path d="M162 88 L142 64"/><path d="M162 88 L182 64"/>
+              <path d="M142 64 L135 52"/><path d="M182 64 L189 52"/>
+            </g>
+            <g fill="var(--cilia)" opacity=".5"><circle cx="149" cy="76" r="2.3"/><circle cx="176" cy="76" r="2.3"/></g>
+            <circle cx="162" cy="128" r="10" fill="var(--panel2)" stroke="var(--ink-soft)" stroke-width="1.9"/>
+            <text x="118" y="146" font-size="10" fill="var(--muted)">Sholl ↓ spine ↓</text>
+          </svg>
+        </div>
+        <div>
+          <div class="tag">Route A · Cell-autonomous</div>
+          <h3>뉴런이 스스로 줄어든다</h3>
+          <p>섬모를 잃은 CA1 피라미드 뉴런에서 수상돌기 가지치기가 감소하고
+             성숙 mushroom spine이 소실 — <b>회로 자체가 얇아진다.</b></p>
+          <div class="mono">Golgi-Cox · Sholl intersections · SYP⁺PSD95⁺ puncta</div>
+        </div>
+      </div>
+
+      <div class="route a">
+        <div class="rviz">
+          <svg viewBox="0 0 210 150" aria-hidden="true">
+            <g stroke="var(--glia)" stroke-width="1.9" fill="none" stroke-linecap="round">
+              <path d="M56 72 L26 46"/><path d="M56 72 L18 74"/><path d="M56 72 L28 100"/><path d="M56 72 L56 36"/>
+              <path d="M56 72 L88 44"/><path d="M56 72 L94 76"/><path d="M56 72 L86 102"/><path d="M56 72 L54 112"/>
+              <path d="M26 46 L17 37"/><path d="M88 44 L97 35"/><path d="M28 100 L19 109"/><path d="M86 102 L95 111"/>
+            </g>
+            <circle cx="56" cy="72" r="14" fill="var(--glia)" fill-opacity=".2" stroke="var(--glia)" stroke-width="1.9"/>
+            <text x="4" y="134" font-size="10" fill="var(--glia)" letter-spacing=".1em">C3⁺ A1 ASTROCYTE</text>
+            <g fill="var(--glia)"><circle cx="112" cy="56" r="2.8"/><circle cx="124" cy="64" r="2.8"/><circle cx="118" cy="76" r="2.8"/></g>
+            <path d="M146 36 C158 46 158 62 148 72" fill="none" stroke="var(--ink-soft)" stroke-width="1.9"/>
+            <path d="M172 40 C162 50 162 60 170 68" fill="none" stroke="var(--ink-soft)" stroke-width="1.9"/>
+            <g stroke="var(--cilia)" stroke-width="2.4" stroke-linecap="round">
+              <path d="M148 94 L170 112"/><path d="M148 112 L170 94"/>
+            </g>
+            <text x="122" y="134" font-size="10" fill="var(--muted)">pruning ↑</text>
+          </svg>
+        </div>
+        <div>
+          <div class="tag">Route B · Non-cell-autonomous</div>
+          <h3>성상교세포가 시냅스를 지운다</h3>
+          <p>섬모를 잃은 성상교세포가 <b>C3⁺ A1 반응성</b>으로 전환되어 신경 독성과 과도한
+             시냅스 제거를 일으키고, 뉴런은 <b>이차적으로</b> 무너진다.</p>
+          <div class="mono">GFAP · C3 · Iba1 형태 · cleaved caspase-3</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="foot">
+    <div class="outcome">
+      <span class="chip">04 · READOUT</span>
+      <span><b>해마 의존적 기억 저하</b> — MWM 학습 지연 · probe 체류 ↓ · Y-maze 교대율 ↓ · 문맥 공포기억 ↓</span>
+      <span class="chip">대조: visible platform · thigmotaxis</span>
+    </div>
+    <div class="cred">
+      Cohort 1 &nbsp;2-mo &nbsp;n=39<br>
+      Cohort 2 &nbsp;4-mo &nbsp;n=28
+    </div>
+  </div>
+</div>

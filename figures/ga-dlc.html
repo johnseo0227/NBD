@@ -1,0 +1,295 @@
+<title>미세행동 표현형 발굴 파이프라인</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600&family=Nanum+Myeongjo:wght@400;700&family=IBM+Plex+Sans+KR:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+  *{box-sizing:border-box}
+  :root{
+    --bg:#EDF0F3; --board:#FFFFFF; --panel:#F5F8F9; --panel2:#FAFBFC;
+    --ink:#0E141A; --ink-soft:#3B4753; --muted:#6D7A87;
+    --rule:#D9E0E6; --rule-soft:#E9EEF1;
+    --cilia:#C21E6A; --glia:#0E7887; --ask:#9A5B00;
+    --cilia-wash:#FCEEF4; --glia-wash:#E9F5F6; --ask-wash:#FBF3E4;
+  }
+  @media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+    --bg:#070A0D; --board:#111820; --panel:#171F27; --panel2:#141B22;
+    --ink:#ECF1F5; --ink-soft:#BCC8D3; --muted:#8494A2;
+    --rule:#25303A; --rule-soft:#1D252D;
+    --cilia:#FF6BAA; --glia:#4FC8D8; --ask:#E5A63C;
+    --cilia-wash:#2A1420; --glia-wash:#0E2429; --ask-wash:#2A2113;
+  }}
+  :root[data-theme="dark"]{
+    --bg:#070A0D; --board:#111820; --panel:#171F27; --panel2:#141B22;
+    --ink:#ECF1F5; --ink-soft:#BCC8D3; --muted:#8494A2;
+    --rule:#25303A; --rule-soft:#1D252D;
+    --cilia:#FF6BAA; --glia:#4FC8D8; --ask:#E5A63C;
+    --cilia-wash:#2A1420; --glia-wash:#0E2429; --ask-wash:#2A2113;
+  }
+  body{background:var(--bg);color:var(--ink);font-family:"IBM Plex Sans KR",system-ui,sans-serif;display:flex;justify-content:center;padding:24px;margin:0}
+  .sheet{width:1760px;height:1010px;background:var(--board);border:1px solid var(--rule);
+    padding:44px 52px 38px;display:flex;flex-direction:column;gap:24px;position:relative;overflow:hidden}
+  .sheet::before{content:"";position:absolute;top:0;left:0;right:0;height:5px;
+    background:linear-gradient(90deg,var(--glia) 0 62%,var(--ask) 62% 70%,var(--cilia) 70% 100%)}
+
+  .top{display:flex;justify-content:space-between;align-items:flex-end;gap:40px;
+    border-bottom:1px solid var(--rule);padding-bottom:22px}
+  .eyebrow{font-family:"IBM Plex Mono",monospace;font-size:13px;letter-spacing:.24em;
+    text-transform:uppercase;color:var(--glia);margin-bottom:12px}
+  h1{margin:0;font-family:Newsreader,"Nanum Myeongjo",serif;font-weight:500;font-size:40px;
+    line-height:1.34;letter-spacing:-.01em;max-width:1200px;text-wrap:balance}
+  h1 .g{color:var(--glia)} h1 .q{color:var(--ask)} h1 .c{color:var(--cilia)}
+  .stamp{font-family:"IBM Plex Mono",monospace;font-size:12px;line-height:1.9;letter-spacing:.08em;
+    color:var(--muted);text-align:right;white-space:nowrap}
+  .stamp b{display:block;color:var(--ink-soft);font-weight:500;font-size:13px;letter-spacing:.14em}
+
+  .flow{display:grid;grid-template-columns:1fr 30px 1fr 30px 1fr 30px 1.06fr;flex:1;min-height:0;align-items:stretch}
+  .arrow{display:flex;align-items:center;justify-content:center;color:var(--rule)}
+  .arrow svg{width:24px;height:24px}
+  .col{display:flex;flex-direction:column;gap:13px;min-width:0;min-height:0}
+  .stage{font-family:"IBM Plex Mono",monospace;font-size:11.5px;letter-spacing:.2em;
+    text-transform:uppercase;color:var(--muted);display:flex;gap:10px;align-items:center;height:16px}
+  .stage::after{content:"";flex:1;height:1px;background:var(--rule-soft)}
+  .card{background:var(--panel);border:1px solid var(--rule-soft);padding:15px 17px;
+    display:flex;flex-direction:column;gap:12px;flex:1;min-height:0}
+  .viz{flex:1;min-height:0;display:flex}
+  .viz svg{width:100%;height:100%}
+  .card.out{background:var(--ask-wash);border-color:var(--ask);border-width:1px 1px 1px 4px}
+  .card h3{margin:0;font-size:17px;font-weight:600;line-height:1.45}
+  .card p{margin:0;font-size:13.5px;line-height:1.68;color:var(--ink-soft)}
+  .card p b{font-weight:600;color:var(--ink)}
+  .mono{font-family:"IBM Plex Mono",monospace;font-size:11.5px;line-height:1.75;color:var(--muted)}
+  .card .mono.top{padding-top:11px;border-top:1px solid var(--rule-soft)}
+
+  .compare{border-top:1px solid var(--rule);padding-top:18px;display:grid;
+    grid-template-columns:118px 1fr 1fr;gap:0 26px;align-items:stretch}
+  .compare .axis{font-family:"IBM Plex Mono",monospace;font-size:11px;letter-spacing:.16em;
+    text-transform:uppercase;color:var(--muted);display:flex;align-items:center}
+  .compare .side{padding:0 0 0 22px;border-left:3px solid var(--rule)}
+  .compare .side.ml{border-left-color:var(--glia)}
+  .compare .side h4{margin:0 0 8px;font-size:14.5px;font-weight:600;letter-spacing:.01em}
+  .compare .side.trad h4{color:var(--muted)}
+  .compare .side.ml h4{color:var(--glia)}
+  .compare .side p{margin:0;font-size:13px;line-height:1.7;color:var(--ink-soft)}
+  .compare .side p b{color:var(--ink);font-weight:600}
+  svg text{font-family:"IBM Plex Mono",monospace}
+</style>
+
+<div class="sheet">
+  <div class="top">
+    <div>
+      <div class="eyebrow">Research Question — Behavioral Phenotyping</div>
+      <h1>표준 행동지표가 <span class="q">“차이 없음”</span>이라 말할 때,
+        자세와 시간 구조 속 <span class="g">어떤 미세행동</span>이
+        <span class="c">질환 모델</span>을 가르는가?</h1>
+    </div>
+    <div class="stamp">
+      <b>NBD LAB · SEJONG UNIV.</b>
+      Joeun Seo · 2026<br>
+      DeepLabCut → SimBA / MoSeq
+    </div>
+  </div>
+
+  <div class="flow">
+    <!-- 01 INPUT -->
+    <div class="col">
+      <div class="stage">01 · Input</div>
+      <div class="card">
+        <div class="viz"><svg viewBox="0 0 260 176" aria-hidden="true">
+          <rect x="14" y="14" width="232" height="140" fill="var(--panel2)" stroke="var(--rule)" stroke-width="1.6"/>
+          <rect x="72" y="49" width="116" height="70" fill="none" stroke="var(--rule)" stroke-width="1"
+                stroke-dasharray="4 4"/>
+          <text x="78" y="44" font-size="9" fill="var(--muted)" letter-spacing=".1em">CENTER ZONE</text>
+          <!-- trajectory -->
+          <path d="M32 142 C44 122 38 100 50 82 C62 62 48 42 68 34 C90 26 96 52 114 58
+                   C134 64 130 94 150 102 C172 112 196 96 206 76 C214 60 202 44 190 38"
+                fill="none" stroke="var(--glia)" stroke-width="1.5" opacity=".55"/>
+          <!-- mouse body + keypoints -->
+          <ellipse cx="150" cy="96" rx="26" ry="14" transform="rotate(-24 150 96)"
+                   fill="var(--ink-soft)" fill-opacity=".14" stroke="var(--ink-soft)" stroke-width="1.3"/>
+          <g stroke="var(--glia)" stroke-width="1.6"><path d="M172 84 L150 96 L128 108 L112 118"/>
+            <path d="M172 84 L166 74"/><path d="M172 84 L180 78"/></g>
+          <g fill="var(--glia)">
+            <circle cx="180" cy="78" r="3.6"/><circle cx="166" cy="74" r="3.2"/>
+            <circle cx="172" cy="84" r="3.2"/><circle cx="150" cy="96" r="3.6"/>
+            <circle cx="128" cy="108" r="3.2"/><circle cx="112" cy="118" r="3.2"/>
+          </g>
+          <text x="188" y="72" font-size="9" fill="var(--glia)">snout</text>
+          <text x="120" y="130" font-size="9" fill="var(--glia)">tail base</text>
+          <text x="14" y="170" font-size="9.5" fill="var(--muted)">OFT · NOR · FY-maze · MWM — 전 프레임</text>
+        </svg></div>
+        <h3>같은 비디오, 버려지던 정보</h3>
+        <p>기존 분석은 한 세션을 <b>지연시간·체류시간 같은 몇 개의 숫자</b>로 압축한다.
+           나머지 프레임은 사용되지 않는다.</p>
+        <div class="mono top">Cohort 1 2-mo n=39 · Cohort 2 4-mo n=28</div>
+      </div>
+    </div>
+
+    <div class="arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
+      stroke-linecap="round" stroke-linejoin="round"><path d="M4 12h15M13 6l6 6-6 6"/></svg></div>
+
+    <!-- 02 POSE -->
+    <div class="col">
+      <div class="stage">02 · Pose &amp; features</div>
+      <div class="card">
+        <div class="viz"><svg viewBox="0 0 260 176" aria-hidden="true">
+          <rect x="6" y="8" width="248" height="30" fill="var(--panel2)" stroke="var(--rule)" stroke-width="1.2"/>
+          <text x="16" y="27" font-size="10.5" fill="var(--ink-soft)" letter-spacing=".08em">ResNet-50 · DeepLabCut</text>
+          <text x="196" y="27" font-size="10.5" fill="var(--glia)">→ x,y,t</text>
+          <!-- three feature traces -->
+          <g stroke="var(--rule)" stroke-width="1">
+            <line x1="60" y1="62" x2="252" y2="62"/><line x1="60" y1="106" x2="252" y2="106"/>
+            <line x1="60" y1="150" x2="252" y2="150"/>
+          </g>
+          <text x="4" y="52" font-size="8.6" fill="var(--muted)">velocity</text>
+          <path d="M60 54 L71 44 L76 58 L88 40 L100 56 L112 46 L124 60 L136 38 L148 54 L160 48
+                   L172 60 L184 42 L196 56 L208 46 L220 58 L232 44 L244 54 L252 50"
+                fill="none" stroke="var(--glia)" stroke-width="1.6"/>
+          <text x="4" y="96" font-size="8.6" fill="var(--muted)">head angle</text>
+          <path d="M60 100 L71 88 L76 96 L88 84 L100 102 L112 90 L124 86 L136 100 L148 92 L160 82
+                   L172 98 L184 88 L196 94 L208 84 L220 100 L232 90 L244 96 L252 92"
+                fill="none" stroke="var(--glia)" stroke-width="1.6" opacity=".7"/>
+          <text x="4" y="140" font-size="8.6" fill="var(--muted)">d(center)</text>
+          <path d="M60 144 L71 132 L76 140 L88 128 L100 134 L112 146 L124 130 L136 138 L148 126
+                   L160 142 L172 132 L184 144 L196 128 L208 138 L220 130 L232 144 L244 134 L252 138"
+                fill="none" stroke="var(--glia)" stroke-width="1.6" opacity=".45"/>
+          <text x="60" y="170" font-size="9.5" fill="var(--muted)">ms 단위 궤적 · 각속도 시계열</text>
+        </svg></div>
+        <h3>행동을 시계열 수학으로</h3>
+        <p>주둥이·귀·몸중심·꼬리 키포인트를 자동 추적해, 눈으로 볼 수 없는 미세 움직임을
+           <b>다차원 시공간 데이터</b>로 바꾼다.</p>
+        <div class="mono top">Python / R · trajectory · velocity · angle</div>
+      </div>
+    </div>
+
+    <div class="arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
+      stroke-linecap="round" stroke-linejoin="round"><path d="M4 12h15M13 6l6 6-6 6"/></svg></div>
+
+    <!-- 03 UNSUPERVISED -->
+    <div class="col">
+      <div class="stage">03 · Unsupervised search</div>
+      <div class="card">
+        <div class="viz"><svg viewBox="0 0 260 176" aria-hidden="true">
+          <rect x="6" y="6" width="248" height="104" fill="var(--panel2)" stroke="var(--rule)" stroke-width="1.2"/>
+          <!-- clusters -->
+          <ellipse cx="62" cy="42" rx="34" ry="24" fill="var(--glia)" fill-opacity=".10"/>
+          <ellipse cx="158" cy="34" rx="30" ry="20" fill="var(--glia)" fill-opacity=".10"/>
+          <ellipse cx="98" cy="86" rx="30" ry="18" fill="var(--glia)" fill-opacity=".10"/>
+          <ellipse cx="196" cy="82" rx="32" ry="20" fill="var(--ask)" fill-opacity=".14"/>
+          <g fill="var(--glia)" opacity=".85">
+            <circle cx="46" cy="34" r="2.6"/><circle cx="58" cy="28" r="2.6"/><circle cx="70" cy="38" r="2.6"/>
+            <circle cx="54" cy="48" r="2.6"/><circle cx="72" cy="52" r="2.6"/><circle cx="82" cy="40" r="2.6"/>
+            <circle cx="146" cy="28" r="2.6"/><circle cx="158" cy="24" r="2.6"/><circle cx="168" cy="34" r="2.6"/>
+            <circle cx="152" cy="42" r="2.6"/><circle cx="172" cy="44" r="2.6"/>
+            <circle cx="86" cy="82" r="2.6"/><circle cx="98" cy="78" r="2.6"/><circle cx="108" cy="90" r="2.6"/>
+            <circle cx="92" cy="94" r="2.6"/><circle cx="112" cy="80" r="2.6"/>
+          </g>
+          <g fill="var(--ask)">
+            <circle cx="182" cy="76" r="2.8"/><circle cx="194" cy="72" r="2.8"/><circle cx="206" cy="82" r="2.8"/>
+            <circle cx="188" cy="90" r="2.8"/><circle cx="204" cy="92" r="2.8"/><circle cx="214" cy="76" r="2.8"/>
+          </g>
+          <text x="176" y="106" font-size="9" fill="var(--ask)" letter-spacing=".06em">syllable #7</text>
+          <text x="10" y="18" font-size="9" fill="var(--muted)" letter-spacing=".1em">FEATURE SPACE</text>
+          <!-- ethogram -->
+          <text x="6" y="128" font-size="9" fill="var(--muted)">CTRL</text>
+          <g>
+            <rect x="40" y="120" width="26" height="10" fill="var(--glia)" opacity=".8"/>
+            <rect x="68" y="120" width="16" height="10" fill="var(--glia)" opacity=".45"/>
+            <rect x="86" y="120" width="34" height="10" fill="var(--glia)" opacity=".62"/>
+            <rect x="122" y="120" width="14" height="10" fill="var(--ask)" opacity=".85"/>
+            <rect x="138" y="120" width="30" height="10" fill="var(--glia)" opacity=".8"/>
+            <rect x="170" y="120" width="20" height="10" fill="var(--glia)" opacity=".45"/>
+            <rect x="192" y="120" width="28" height="10" fill="var(--glia)" opacity=".62"/>
+            <rect x="222" y="120" width="30" height="10" fill="var(--glia)" opacity=".8"/>
+          </g>
+          <text x="6" y="150" font-size="9" fill="var(--cilia)">cKO</text>
+          <g>
+            <rect x="40" y="142" width="14" height="10" fill="var(--glia)" opacity=".45"/>
+            <rect x="56" y="142" width="12" height="10" fill="var(--ask)" opacity=".85"/>
+            <rect x="70" y="142" width="10" height="10" fill="var(--glia)" opacity=".62"/>
+            <rect x="82" y="142" width="16" height="10" fill="var(--ask)" opacity=".85"/>
+            <rect x="100" y="142" width="12" height="10" fill="var(--glia)" opacity=".8"/>
+            <rect x="114" y="142" width="18" height="10" fill="var(--ask)" opacity=".85"/>
+            <rect x="134" y="142" width="14" height="10" fill="var(--glia)" opacity=".45"/>
+            <rect x="150" y="142" width="20" height="10" fill="var(--ask)" opacity=".85"/>
+            <rect x="172" y="142" width="16" height="10" fill="var(--glia)" opacity=".62"/>
+            <rect x="190" y="142" width="24" height="10" fill="var(--glia)" opacity=".8"/>
+            <rect x="216" y="142" width="14" height="10" fill="var(--ask)" opacity=".85"/>
+            <rect x="232" y="142" width="20" height="10" fill="var(--glia)" opacity=".45"/>
+          </g>
+          <text x="34" y="170" font-size="9.5" fill="var(--muted)">행동 음절 시퀀스 · 사전 정의 없음</text>
+        </svg></div>
+        <h3>정의하지 않고 발견한다</h3>
+        <p>비지도 클러스터링이 스스로 <b>행동 음절</b>을 나누고, 그 사용 빈도·전이 구조에서
+           집단 차이가 드러난다.</p>
+        <div class="mono top">SimBA · MoSeq · 편향 없는 자동 분류</div>
+      </div>
+    </div>
+
+    <div class="arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
+      stroke-linecap="round" stroke-linejoin="round"><path d="M4 12h15M13 6l6 6-6 6"/></svg></div>
+
+    <!-- 04 OUTPUT -->
+    <div class="col">
+      <div class="stage">04 · The answer sought</div>
+      <div class="card out">
+        <div class="viz"><svg viewBox="0 0 280 176" aria-hidden="true">
+          <text x="4" y="12" font-size="9.5" fill="var(--muted)" letter-spacing=".12em">SYLLABLE USAGE (%)</text>
+          <g stroke="var(--rule)" stroke-width="1"><line x1="4" y1="132" x2="276" y2="132"/></g>
+          <!-- 8 syllable pairs -->
+          <g>
+            <rect x="10"  y="86"  width="11" height="46" fill="var(--ink-soft)" opacity=".35"/>
+            <rect x="22"  y="92"  width="11" height="40" fill="var(--cilia)" opacity=".8"/>
+            <rect x="44"  y="70"  width="11" height="62" fill="var(--ink-soft)" opacity=".35"/>
+            <rect x="56"  y="76"  width="11" height="56" fill="var(--cilia)" opacity=".8"/>
+            <rect x="78"  y="102" width="11" height="30" fill="var(--ink-soft)" opacity=".35"/>
+            <rect x="90"  y="98"  width="11" height="34" fill="var(--cilia)" opacity=".8"/>
+            <rect x="112" y="80"  width="11" height="52" fill="var(--ink-soft)" opacity=".35"/>
+            <rect x="124" y="86"  width="11" height="46" fill="var(--cilia)" opacity=".8"/>
+            <rect x="146" y="94"  width="11" height="38" fill="var(--ink-soft)" opacity=".35"/>
+            <rect x="158" y="90"  width="11" height="42" fill="var(--cilia)" opacity=".8"/>
+            <rect x="180" y="106" width="11" height="26" fill="var(--ink-soft)" opacity=".35"/>
+            <rect x="192" y="100" width="11" height="32" fill="var(--cilia)" opacity=".8"/>
+            <!-- highlighted syllable #7 -->
+            <rect x="212" y="104" width="11" height="28" fill="var(--ink-soft)" opacity=".35"/>
+            <rect x="224" y="34"  width="11" height="98" fill="var(--cilia)"/>
+            <rect x="246" y="98"  width="11" height="34" fill="var(--ink-soft)" opacity=".35"/>
+            <rect x="258" y="94"  width="11" height="38" fill="var(--cilia)" opacity=".8"/>
+          </g>
+          <rect x="206" y="26" width="36" height="112" fill="none" stroke="var(--ask)" stroke-width="1.6"/>
+          <text x="150" y="22" font-size="10" fill="var(--ask)" letter-spacing=".04em">candidate biomarker</text>
+          <text x="10" y="146" font-size="9" fill="var(--muted)">1</text>
+          <text x="44" y="146" font-size="9" fill="var(--muted)">2</text>
+          <text x="78" y="146" font-size="9" fill="var(--muted)">3</text>
+          <text x="112" y="146" font-size="9" fill="var(--muted)">4</text>
+          <text x="146" y="146" font-size="9" fill="var(--muted)">5</text>
+          <text x="180" y="146" font-size="9" fill="var(--muted)">6</text>
+          <text x="214" y="146" font-size="9" fill="var(--ask)">7</text>
+          <text x="246" y="146" font-size="9" fill="var(--muted)">8</text>
+          <rect x="10" y="160" width="10" height="8" fill="var(--ink-soft)" opacity=".35"/>
+          <text x="24" y="168" font-size="9.5" fill="var(--muted)">control</text>
+          <rect x="72" y="160" width="10" height="8" fill="var(--cilia)"/>
+          <text x="86" y="168" font-size="9.5" fill="var(--muted)">disease model</text>
+          <text x="176" y="168" font-size="9.5" fill="var(--muted)">모식도 · 예시</text>
+        </svg></div>
+        <h3>찾는 답: 행동 바이오마커</h3>
+        <p>기존 지표로는 겹쳐 보이던 두 집단을 가르는 <b>소수의 미세행동</b>.
+           이것이 조기·경미한 표현형을 읽는 새 잣대가 된다.</p>
+        <div class="mono top">→ 분자 지표(시냅스·신경염증)와의 상관 검증</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="compare">
+    <div class="axis">왜 필요한가</div>
+    <div class="side trad">
+      <h4>기존 분석 — 1차원 요약지표</h4>
+      <p>사전에 정한 파라미터로만 집단을 비교하고, 궤적·구역 기반 판정에 <b>주관이 개입</b>한다.
+         정의하지 않은 행동은 애초에 보이지 않는다.</p>
+    </div>
+    <div class="side ml">
+      <h4>ML 기반 — 전 프레임 다차원 데이터</h4>
+      <p>모든 프레임의 시공간 정보를 사용해 <b>숨은 미세행동 패턴</b>을 추출하고,
+         편향 없는 자동 분류로 <b>확장 가능한</b> 표현형 기술을 만든다.</p>
+    </div>
+  </div>
+</div>

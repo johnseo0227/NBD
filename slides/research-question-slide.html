@@ -1,0 +1,255 @@
+<title>섬모가 사라진 전뇌</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400&family=IBM+Plex+Sans+KR:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+
+<style>
+  :root {
+    --bg:        #F2F4F6;
+    --board:     #FFFFFF;
+    --panel:     #F7F9FA;
+    --ink:       #10161C;
+    --ink-soft:  #3C4854;
+    --muted:     #6B7885;
+    --rule:      #DCE2E8;
+    --rule-soft: #E9EDF1;
+    /* confocal channel accents: ARL13B magenta, GFAP teal */
+    --cilia:     #C21E6A;
+    --glia:      #0E7887;
+    --wash:      rgba(194, 30, 106, 0.06);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg:        #080B0E;
+      --board:     #12181E;
+      --panel:     #171F26;
+      --ink:       #ECF1F5;
+      --ink-soft:  #C0CBD5;
+      --muted:     #8695A3;
+      --rule:      #26313B;
+      --rule-soft: #1E262E;
+      --cilia:     #FF6BAA;
+      --glia:      #4FC8D8;
+      --wash:      rgba(255, 107, 170, 0.08);
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg:        #080B0E;
+    --board:     #12181E;
+    --panel:     #171F26;
+    --ink:       #ECF1F5;
+    --ink-soft:  #C0CBD5;
+    --muted:     #8695A3;
+    --rule:      #26313B;
+    --rule-soft: #1E262E;
+    --cilia:     #FF6BAA;
+    --glia:      #4FC8D8;
+    --wash:      rgba(255, 107, 170, 0.08);
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: "IBM Plex Sans KR", system-ui, -apple-system, "Malgun Gothic", sans-serif;
+    display: flex;
+    justify-content: center;
+    padding: 3vh 2.5vw;
+  }
+
+  .stage { width: 100%; max-width: 1500px; display: flex; flex-direction: column; gap: 14px; }
+
+  .slide {
+    container-type: inline-size;
+    aspect-ratio: 16 / 9;
+    background: var(--board);
+    border: 1px solid var(--rule);
+    box-shadow: 0 18px 44px -28px rgba(8, 20, 32, .55);
+    display: flex;
+    flex-direction: column;
+    padding: 3.4cqw 3.8cqw 2.6cqw;
+    gap: 2.1cqw;
+    overflow: hidden;
+    position: relative;
+  }
+  .slide::before {
+    content: "";
+    position: absolute; inset: 0 0 auto 0; height: 0.28cqw;
+    background: linear-gradient(90deg, var(--cilia) 0%, var(--cilia) 34%, var(--glia) 34%, var(--glia) 100%);
+  }
+
+  /* ---- header ---- */
+  .head { display: flex; align-items: center; justify-content: space-between; gap: 2cqw; }
+  .head-id { display: flex; align-items: center; gap: 1.1cqw; }
+  .axoneme { width: 2.6cqw; height: 2.6cqw; flex: none; }
+  .lab { font-family: "IBM Plex Mono", monospace; font-size: 1cqw; letter-spacing: .13em; text-transform: uppercase; color: var(--muted); line-height: 1.55; }
+  .lab b { display: block; color: var(--ink-soft); font-weight: 500; letter-spacing: .1em; }
+  .head-meta { font-family: "IBM Plex Mono", monospace; font-size: .95cqw; letter-spacing: .1em; color: var(--muted); text-align: right; line-height: 1.6; }
+
+  /* ---- the question ---- */
+  .q-block { display: grid; grid-template-columns: auto 1fr; gap: 1.9cqw; align-items: start; }
+  .q-rail { width: 0.22cqw; align-self: stretch; background: var(--cilia); }
+  .eyebrow { font-family: "IBM Plex Mono", monospace; font-size: .92cqw; letter-spacing: .22em; text-transform: uppercase; color: var(--cilia); margin-bottom: .9cqw; }
+  .question {
+    font-family: Newsreader, "Nanum Myeongjo", Georgia, serif;
+    font-size: 2.72cqw; font-weight: 500; line-height: 1.34; letter-spacing: -0.005em;
+    text-wrap: balance; color: var(--ink); margin: 0;
+  }
+  .question em { font-style: normal; color: var(--cilia); }
+  .question .g { color: var(--glia); }
+  .q-sub { margin: 1.05cqw 0 0; font-size: 1.16cqw; line-height: 1.6; color: var(--muted); max-width: 74cqw; }
+
+  /* ---- causal chain: cilium loss -> circuit -> behavior ---- */
+  .chain { display: grid; grid-template-columns: 1fr auto 1fr auto 1fr; align-items: stretch; gap: 0; }
+  .link { display: flex; align-items: center; justify-content: center; width: 2.6cqw; color: var(--rule); }
+  .link svg { width: 1.5cqw; height: 1.5cqw; }
+  .step { background: var(--panel); border: 1px solid var(--rule-soft); border-top: 0.18cqw solid var(--step); padding: 1.5cqw 1.5cqw 1.4cqw; display: flex; flex-direction: column; gap: .85cqw; }
+  .s1 { --step: var(--cilia); }
+  .s2 { --step: var(--glia); }
+  .s3 { --step: var(--ink-soft); }
+  .step-tag { font-family: "IBM Plex Mono", monospace; font-size: .88cqw; letter-spacing: .16em; text-transform: uppercase; color: var(--step); display: flex; gap: .7cqw; align-items: baseline; }
+  .step-tag span { color: var(--muted); letter-spacing: .1em; }
+  .step h3 { margin: 0; font-size: 1.34cqw; line-height: 1.48; font-weight: 600; color: var(--ink); text-wrap: balance; }
+  .step p { margin: 0; font-size: 1.04cqw; line-height: 1.68; color: var(--ink-soft); }
+  .step p b { font-weight: 500; color: var(--ink); }
+  .step .method { margin-top: auto; padding-top: .9cqw; border-top: 1px solid var(--rule-soft); font-family: "IBM Plex Mono", monospace; font-size: .88cqw; line-height: 1.7; color: var(--muted); letter-spacing: .01em; }
+
+  /* ---- why now / why it matters ---- */
+  .base { display: grid; grid-template-columns: 1.15fr 1fr; gap: 2.4cqw; padding-top: 1.5cqw; border-top: 1px solid var(--rule); }
+  .base section { display: flex; flex-direction: column; gap: .7cqw; }
+  .base h4 { margin: 0; font-family: "IBM Plex Mono", monospace; font-size: .88cqw; letter-spacing: .18em; text-transform: uppercase; color: var(--muted); font-weight: 500; }
+  .base p { margin: 0; font-size: 1.05cqw; line-height: 1.65; color: var(--ink-soft); }
+  .base .gap-list { display: flex; flex-direction: column; gap: .45cqw; }
+  .base .gap-list p { padding-left: 1.3cqw; position: relative; }
+  .base .gap-list p::before { content: "×"; position: absolute; left: 0; color: var(--cilia); font-family: "IBM Plex Mono", monospace; }
+  .base .impact { border-left: 1px solid var(--rule); padding-left: 2.4cqw; margin-left: -2.4cqw; }
+  .base .impact p b { color: var(--glia); font-weight: 600; }
+
+  /* ---- data footer ---- */
+  .foot { margin-top: auto; padding-top: 1.3cqw; border-top: 1px solid var(--rule-soft); display: flex; flex-wrap: wrap; gap: .6cqw 1.5cqw; font-family: "IBM Plex Mono", monospace; font-size: .86cqw; letter-spacing: .06em; color: var(--muted); font-variant-numeric: tabular-nums; }
+  .foot i { font-style: italic; }
+  .foot .dot { color: var(--rule); }
+  .foot strong { color: var(--ink-soft); font-weight: 500; }
+
+  .caption { font-family: "IBM Plex Mono", monospace; font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); text-align: center; }
+
+  @media (max-width: 720px) {
+    .slide { aspect-ratio: auto; padding: 5cqw; gap: 4cqw; }
+    .chain { grid-template-columns: 1fr; }
+    .link { width: auto; height: 3cqw; transform: rotate(90deg); }
+    .base { grid-template-columns: 1fr; }
+    .base .impact { border-left: 0; border-top: 1px solid var(--rule); padding: 1.6cqw 0 0; margin: 0; }
+    .question { font-size: 5.2cqw; }
+    .q-sub, .step p, .base p { font-size: 2.5cqw; }
+    .step h3 { font-size: 3.2cqw; }
+    .eyebrow, .lab, .head-meta, .step-tag, .base h4, .step .method, .foot { font-size: 2.1cqw; }
+  }
+  @page { size: landscape; margin: 10mm; }
+</style>
+
+<div class="stage">
+  <div class="slide">
+
+    <header class="head">
+      <div class="head-id">
+        <!-- 9+0 axoneme cross-section: nine doublets, no central pair -->
+        <svg class="axoneme" viewBox="0 0 40 40" aria-hidden="true">
+          <circle cx="20" cy="20" r="18.2" fill="none" stroke="var(--rule)" stroke-width="1"/>
+          <g fill="var(--cilia)">
+            <circle cx="20.0" cy="7.0"  r="2.0"/><circle cx="28.4" cy="10.0" r="2.0"/>
+            <circle cx="32.4" cy="17.7" r="2.0"/><circle cx="30.6" cy="26.3" r="2.0"/>
+            <circle cx="23.9" cy="31.8" r="2.0"/><circle cx="16.1" cy="31.8" r="2.0"/>
+            <circle cx="9.4"  cy="26.3" r="2.0"/><circle cx="7.6"  cy="17.7" r="2.0"/>
+            <circle cx="11.6" cy="10.0" r="2.0"/>
+          </g>
+        </svg>
+        <div class="lab">
+          <b>Neurobiology of Disease Lab</b>
+          Sejong University · 2026
+        </div>
+      </div>
+      <div class="head-meta">
+        Joeun Seo<br>
+        <i>Pibf1</i><sup>fl/fl</sup> ; <i>Emx1</i>-Cre
+      </div>
+    </header>
+
+    <div class="q-block">
+      <div class="q-rail"></div>
+      <div>
+        <div class="eyebrow">Research Question</div>
+        <h1 class="question">
+          전뇌의 <em>일차 섬모(Pibf1/Cep90)</em>가 사라질 때,
+          인지·정서 행동은 <em>뉴런의 회로 위축</em>과 <span class="g">성상교세포의 신경염증</span> 중
+          어느 경로를 거쳐 무너지며, 그 붕괴는 사람 눈이 놓치는 <em>미세행동</em>에서 먼저 읽히는가?
+        </h1>
+        <p class="q-sub">
+          섬모 소실이라는 하나의 원인에서 출발해, 분자 신호 → 회로·교세포 → 행동으로 이어지는 인과 사슬을
+          한 코호트 안에서 끝까지 추적한다.
+        </p>
+      </div>
+    </div>
+
+    <div class="chain">
+      <article class="step s1">
+        <div class="step-tag">Q1 <span>Cause · 분자</span></div>
+        <h3>섬모는 정말 사라지고, 무엇이 함께 꺼지는가?</h3>
+        <p><i>Pibf1</i> 결손이 <b>중심소체 위성(PCM1) 붕괴 → 원위 부속기 조립 실패</b>로 이어져,
+           뉴런과 성상교세포 모두에서 섬모가 사라지고 <b>Shh 신호가 차단</b>되는지.</p>
+        <div class="method">ARL13B / γ-tubulin 섬모형성률<br>GLI3-FL:GLI3-R 비 · <i>Gli1</i>/<i>Ptch1</i> qPCR</div>
+      </article>
+
+      <div class="link" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12h15M13 6l6 6-6 6"/></svg>
+      </div>
+
+      <article class="step s2">
+        <div class="step-tag">Q2 <span>Mechanism · 회로</span></div>
+        <h3>기억 손상의 주범은 뉴런인가, 성상교세포인가?</h3>
+        <p>CA1 <b>수상돌기 위축·시냅스 소실</b>(세포 자율)과 <b>C3⁺ A1 반응성 성상교세포의
+           과도한 시냅스 제거</b>(비세포 자율) 중 무엇이 표현형을 결정하는지.</p>
+        <div class="method">Golgi-Cox · Sholl · SYP/PSD95 puncta<br>GFAP · C3 · Iba1 · cleaved caspase-3</div>
+      </article>
+
+      <div class="link" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12h15M13 6l6 6-6 6"/></svg>
+      </div>
+
+      <article class="step s3">
+        <div class="step-tag">Q3 <span>Readout · 행동</span></div>
+        <h3>그 손상은 어떤 행동 신호로 드러나는가?</h3>
+        <p>지연시간·체류시간 같은 <b>1차원 요약지표가 놓친 미세행동</b>을 자세 추정과 비지도 학습으로
+           복원해, 조기·경미한 표현형을 가르는 <b>행동 바이오마커</b>를 찾을 수 있는지.</p>
+        <div class="method">DeepLabCut (ResNet-50) pose → 궤적·각속도<br>SimBA / MoSeq 비지도 클러스터링</div>
+      </article>
+    </div>
+
+    <div class="base">
+      <section>
+        <h4>왜 아직 답이 없는가</h4>
+        <div class="gap-list">
+          <p>전신 <i>Pibf1</i> 결손은 <b>배아 치사</b> — 성체 해마·피질에서의 기능은 미규명 영역으로 남아 있다.</p>
+          <p>기존 행동분석은 <b>사전 정의된 1D 지표</b>에 의존해, 섬모병증의 미묘한 표현형을 놓친다.</p>
+        </div>
+      </section>
+      <section class="impact">
+        <h4>답했을 때 얻는 것</h4>
+        <p>주버트 증후군(<b>JBTS33</b>) 환자의 인지 장애를 설명하는 세포 기전, 그리고
+           뉴런이 아닌 <b>성상교세포 섬모를 표적으로 하는 치료 전략</b>의 근거.</p>
+      </section>
+    </div>
+
+    <footer class="foot">
+      <span><strong>Model</strong> <i>Emx1</i>-Cre ; <i>Pibf1</i><sup>fl/fl</sup> cKO</span>
+      <span class="dot">/</span>
+      <span><strong>Cohort 1</strong> 2-mo, n=39</span>
+      <span class="dot">/</span>
+      <span><strong>Cohort 2</strong> 4-mo, n=28</span>
+      <span class="dot">/</span>
+      <span><strong>Behavior</strong> OFT · NOR · FY-maze · MWM</span>
+      <span class="dot">/</span>
+      <span><strong>Control</strong> visible-platform &amp; thigmotaxis 검증</span>
+    </footer>
+
+  </div>
+  <p class="caption">16:9 · 랩미팅 / 연구계획 발표용 단일 슬라이드</p>
+</div>

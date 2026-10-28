@@ -137,7 +137,7 @@ details[open] summary { margin-bottom: 8px; }
 
 .memory { background: var(--accent-soft); border-color: transparent; }
 .memory p { margin: 0; font-weight: 600; }
-.memory .why { margin-top: 2px; }
+.memory .why { margin-top: 2px; font-weight: 400; }
 .memory .actions { margin-top: 6px; }
 
 .person-card { display: flex; justify-content: space-between; align-items: center; gap: 10px; width: 100%; text-align: left; margin-bottom: 8px; padding: 12px 14px; border-radius: 12px; }

@@ -1,4 +1,19 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-  <rect width="512" height="512" fill="#d9822b"/>
-  <path fill="#fff" d="M256 400 C 120 310 96 240 112 196 C 130 146 196 132 256 190 C 316 132 382 146 400 196 C 416 240 392 310 256 400 Z"/>
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#f7b267"/>
+      <stop offset="1" stop-color="#ec7d4a"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" fill="url(#sky)"/>
+  <g stroke="#fff3e0" stroke-width="16" stroke-linecap="round">
+    <line x1="256" y1="150" x2="256" y2="104"/>
+    <line x1="166" y1="186" x2="136" y2="152"/>
+    <line x1="346" y1="186" x2="376" y2="152"/>
+    <line x1="122" y1="262" x2="80" y2="250"/>
+    <line x1="390" y1="262" x2="432" y2="250"/>
+  </g>
+  <circle cx="256" cy="320" r="112" fill="#fff3e0"/>
+  <rect x="0" y="320" width="512" height="192" fill="#c8553d"/>
+  <path d="M0 320 H512" stroke="#fff3e0" stroke-width="10"/>
 </svg>

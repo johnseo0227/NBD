@@ -115,9 +115,6 @@ mark { background: var(--accent-soft); color: inherit; }
 details summary { cursor: pointer; margin-top: 8px; }
 details[open] summary { margin-bottom: 8px; }
 
-.mode-row { display: flex; justify-content: flex-end; margin-bottom: 8px; }
-.toggle-chip { border-radius: 999px; padding: 4px 12px; font-size: .85rem; color: var(--muted); }
-.toggle-chip[aria-pressed=true] { background: var(--accent-soft); border-color: var(--accent); color: var(--text); }
 
 .cats { display: flex; flex-wrap: wrap; gap: 6px; }
 .cat { border-radius: 999px; padding: 3px 10px; font-size: .8rem; color: var(--muted); }

@@ -23,13 +23,6 @@ const PROMPTS = [
   '오늘 배운 새로운 것은?',
   '오늘 누군가를 도왔다면, 그 기회가 고마운 이유는?',
 ];
-const HARD_PROMPTS = [
-  '힘들었지만 그래도 버틸 수 있게 해 준 것은?',
-  '오늘 아주 잠깐이라도 숨 돌릴 수 있었던 순간은?',
-  '힘든 하루 속에서 나를 걱정해 준 사람은?',
-  '이 어려움 속에서 배우고 있는 것은?',
-  '그래도 오늘 해낸 아주 작은 일 하나는?',
-];
 const STOPWORDS = new Set(['오늘', '정말', '너무', '그리고', '그래서', '있었다', '했다', '좋았다', '고마웠다', '감사했다', '것이', '수가', '덕분에', '같다', '나를', '내가', '나의', '났다', '있다', '없다', '하는', '해서']);
 const PARTICLES = /(에게서|에서|에게|한테|께서|으로|로|은|는|이|가|을|를|와|과|도|의|에|랑|이랑)$/;
 
@@ -111,15 +104,14 @@ let promptIdx = Math.floor(Math.random() * PROMPTS.length);
 function getDraft() {
   const saved = state.entries[currentDate];
   const e = saved
-    ? { hardDay: false, intention: '', self: '', ...structuredClone(saved) }
-    : { moodBefore: null, moodAfter: null, items: [], self: '', hardDay: false, intention: '' };
+    ? { intention: '', self: '', ...structuredClone(saved) }
+    : { moodBefore: null, moodAfter: null, items: [], self: '', intention: '' };
   e.items = e.items.map(normItem);
   while (e.items.length < state.settings.itemCount) e.items.push(normItem({}));
   return e;
 }
 let draft = getDraft();
 
-const prompts = () => (draft.hardDay ? HARD_PROMPTS : PROMPTS);
 
 function renderMoods() {
   document.querySelectorAll('.moods').forEach((box) => {
@@ -130,10 +122,8 @@ function renderMoods() {
 }
 
 function renderItems() {
-  const placeholder = draft.hardDay ? '힘들었지만 그래도 고마웠던 것' : '무엇이 감사했나요? (구체적으로)';
-  $('#items-hint').textContent = draft.hardDay
-    ? '힘든 날엔 하나만 써도 충분해요.'
-    : '많이보다 깊게. 하나만 써도 괜찮아요.';
+  const placeholder = '무엇이 감사했나요? (구체적으로)';
+  $('#items-hint').textContent = '많이보다 깊게. 하나만 써도 괜찮아요.';
   $('#items').innerHTML = draft.items.map((it, i) => `
     <div class="card item" data-i="${i}">
       <div class="item-head">
@@ -192,11 +182,9 @@ function renderWrite() {
   $('#entry-date').value = currentDate;
   $('#entry-date').max = todayKey();
   $('#next-day').disabled = currentDate >= todayKey();
-  $('#hard-day').setAttribute('aria-pressed', String(!!draft.hardDay));
   $('#intention-card').hidden = !state.settings.morning;
   $('#intention').value = draft.intention || '';
-  promptIdx %= prompts().length;
-  $('#prompt-text').textContent = prompts()[promptIdx];
+  $('#prompt-text').textContent = PROMPTS[promptIdx];
   $('#self').value = draft.self;
   $('#save-status').textContent = state.entries[currentDate] ? '저장됨' : '';
   renderPeopleList();
@@ -235,7 +223,7 @@ function saveDraft() {
   } else {
     state.entries[currentDate] = {
       moodBefore: draft.moodBefore, moodAfter: draft.moodAfter, items,
-      self: draft.self.trim(), hardDay: !!draft.hardDay, intention: (draft.intention || '').trim(), updatedAt: now,
+      self: draft.self.trim(), intention: (draft.intention || '').trim(), updatedAt: now,
     };
     changed('entry', currentDate, now);
   }
@@ -298,21 +286,11 @@ document.querySelectorAll('.moods').forEach((box) => box.addEventListener('click
   renderMoods();
   scheduleSave();
 }));
-$('#hard-day').addEventListener('click', () => {
-  draft.hardDay = !draft.hardDay;
-  promptIdx = 0;
-  memoryIdx = 0;
-  renderMemory();
-  $('#hard-day').setAttribute('aria-pressed', String(draft.hardDay));
-  $('#prompt-text').textContent = prompts()[promptIdx];
-  renderItems();
-  scheduleSave();
-});
 $('#intention').addEventListener('input', (ev) => { draft.intention = ev.target.value; scheduleSave(); });
 $('#self').addEventListener('input', (ev) => { draft.self = ev.target.value; scheduleSave(); });
 $('#save').addEventListener('click', () => { clearTimeout(saveTimer); saveDraft(); });
 $('#new-prompt').addEventListener('click', () => {
-  const list = prompts();
+  const list = PROMPTS;
   promptIdx = (promptIdx + 1 + Math.floor(Math.random() * (list.length - 1))) % list.length;
   $('#prompt-text').textContent = list[promptIdx];
 });
@@ -343,7 +321,7 @@ function renderHistory() {
     const mood = e.moodBefore !== null || e.moodAfter !== null
       ? `<span class="muted">${e.moodBefore !== null ? MOODS[e.moodBefore] : '·'} → ${e.moodAfter !== null ? MOODS[e.moodAfter] : '·'}</span>` : '';
     return `<div class="card day">
-      <h3><span>${fmtDate(k)} ${e.hardDay ? '😮‍💨 ' : ''}${mood}</span><button data-edit="${k}">수정</button></h3>
+      <h3><span>${fmtDate(k)} ${mood}</span><button data-edit="${k}">수정</button></h3>
       <ul>${items.map((it) => `<li><button class="star${it.starred ? ' on' : ''}" data-day="${k}" data-idx="${it.idx}" aria-label="별표">★</button>
         <div>${highlight(it.what, q)}${itemTags(it)}${it.why ? `<span class="why">${highlight(it.why, q)}</span>` : ''}${it.role ? `<span class="why">내 역할: ${highlight(it.role, q)}</span>` : ''}</div></li>`).join('')}
         ${selfMatch ? `<li><span>🙋</span><div><span class="why">나에게: ${highlight(e.self, q)}</span></div></li>` : ''}
@@ -485,7 +463,7 @@ function renderBook() {
     for (const k of days.filter((d) => monthKey(d) === m)) {
       const e = state.entries[k];
       const items = e.items.map(normItem).filter((it) => it.what);
-      html += `<div class="book-day"><h3>${fmtDate(k)}${e.hardDay ? ' 😮‍💨' : ''}</h3><ul>${items.map((it) => `<li>${it.starred ? '⭐ ' : ''}${esc(it.what)}${
+      html += `<div class="book-day"><h3>${fmtDate(k)}</h3><ul>${items.map((it) => `<li>${it.starred ? '⭐ ' : ''}${esc(it.what)}${
         it.who ? ` <span class="note">— ${esc(splitPeople(it.who).join(', '))} 덕분에</span>` : ''}${
         it.why ? `<br><span class="why">${esc(it.why)}</span>` : ''}</li>`).join('')}</ul>${
         e.self ? `<p class="note">🙋 나에게: ${esc(e.self)}</p>` : ''}</div>`;
@@ -869,35 +847,20 @@ const pickItem = (e) => {
   const items = e.items.map(normItem).filter((it) => it.what);
   return items.find((it) => it.starred) || items[0];
 };
-const hash = (str) => [...str].reduce((a, c) => (a * 31 + c.charCodeAt(0)) | 0, 7);
-
-function memoryCandidates(today, hardDay) {
+function memoryCandidates(today) {
   const out = [];
-  const add = (label, day, it) => {
-    if (it && !out.some((m) => m.day === day && m.what === it.what)) out.push({ label, day, what: it.what, why: it.why });
-  };
-  // 일주일 넘게 지난 별표 항목. 날마다 순서가 바뀌도록 날짜로 섞는다
-  const starred = [];
-  for (const [day, e] of Object.entries(state.entries)) {
-    if (daysBetween(day, today) < 7) continue;
-    e.items.map(normItem).forEach((it) => { if (it.starred && it.what) starred.push([day, it]); });
-  }
-  starred.sort((a, b) => hash(today + a[0] + a[1].what) - hash(today + b[0] + b[1].what));
-  const starLabel = hardDay ? '😮‍💨 힘든 날엔, 이런 날도 있었어요' : '⭐ 예전에 별표한 순간';
-
-  if (hardDay) starred.forEach(([d, it]) => add(starLabel, d, it));
   for (const [months, label] of [[6, '📅 6개월 전 오늘'], [1, '📅 한 달 전 오늘']]) {
     const d = shiftBack(today, months);
-    if (d && state.entries[d]) add(label, d, pickItem(state.entries[d]));
+    const it = d && hasContent(state.entries[d]) ? pickItem(state.entries[d]) : null;
+    if (it) out.push({ label, day: d, what: it.what, why: it.why });
   }
-  if (!hardDay) starred.forEach(([d, it]) => add(starLabel, d, it));
   return out;
 }
 
 let memoryIdx = 0;
 function renderMemory() {
   const today = todayKey();
-  const list = currentDate === today ? memoryCandidates(today, !!draft.hardDay) : [];
+  const list = currentDate === today ? memoryCandidates(today) : [];
   $('#memory-card').hidden = !list.length;
   if (!list.length) return;
   const m = list[memoryIdx % list.length];
@@ -915,13 +878,10 @@ const hasMoods = (e) => hasContent(e) && e.moodBefore != null && e.moodAfter != 
 function moodEffect(entries) {
   const rated = entries.filter(hasMoods);
   const avg = (list) => (list.length ? list.reduce((a, e) => a + e.moodAfter - e.moodBefore, 0) / list.length : 0);
-  const hard = rated.filter((e) => e.hardDay);
   return {
     n: rated.length,
     avg: avg(rated),
     upShare: rated.length ? rated.filter((e) => e.moodAfter > e.moodBefore).length / rated.length : 0,
-    hardN: hard.length,
-    hardAvg: avg(hard),
   };
 }
 
@@ -946,7 +906,6 @@ function renderEffect(days) {
       <p class="effect-line">이번 달, 감사 일기를 쓰고 나면 기분이 평균 <b>${signed(month.avg)}단계</b> 달라졌어요 (${month.n}일).</p>`
       : '<p class="effect-line">이번 달에는 아직 기분 기록이 없어요.</p>'}
     <p class="effect-line muted">전체 기간 평균 ${signed(all.avg)}단계 · 기분이 좋아진 날 ${Math.round(all.upShare * 100)}% (${all.n}일)</p>
-    ${all.hardN >= 2 ? `<p class="effect-line muted">힘든 날에도 평균 ${signed(all.hardAvg)}단계 (${all.hardN}일)</p>` : ''}
     <div class="daybars" aria-hidden="true">${bars}</div>
     <div class="axis"><span>1일</span><span>${days.length}일</span></div>`;
 }

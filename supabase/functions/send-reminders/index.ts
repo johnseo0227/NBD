@@ -2,7 +2,7 @@
 // 기기마다 정한 시각(현지 시간)이 되면 하루에 한 번씩 알림을 보낸다.
 //   daily  : 매일 쓰기 알림. 그날 이미 썼으면 보내지 않는다
 //   review : 일요일 회고 알림. 그 주 회고를 이미 했으면 보내지 않는다
-//   memory : 6개월·한 달 전 오늘, 또는 예전에 별표한 순간을 다시 보여 준다
+//   memory : 6개월·한 달 전 오늘의 기록을 다시 보여 준다. 그날 기록이 없으면 보내지 않는다
 import { createClient } from 'npm:@supabase/supabase-js@2.115.0';
 import webpush from 'npm:web-push@3.6.7';
 
@@ -50,7 +50,6 @@ const toMinutes = (t: string) => { const [h, m] = t.split(':').map(Number); retu
 const keyToDate = (k: string) => { const [y, m, d] = k.split('-').map(Number); return new Date(Date.UTC(y, m - 1, d)); };
 const dateToKey = (d: Date) => d.toISOString().slice(0, 10);
 export const addDays = (k: string, n: number) => { const d = keyToDate(k); d.setUTCDate(d.getUTCDate() + n); return dateToKey(d); };
-const daysBetween = (a: string, b: string) => Math.round((keyToDate(b).getTime() - keyToDate(a).getTime()) / 86_400_000);
 const weekStart = (k: string) => addDays(k, -((keyToDate(k).getUTCDay() + 6) % 7));
 function shiftBack(k: string, months: number): string | null {
   const d = keyToDate(k);
@@ -98,14 +97,7 @@ function memoryFor(entries: Docs['entries'], today: string): { title: string; it
     const d = shiftBack(today, months);
     if (d && hasContent(entries[d])) return { title, item: pick(entries[d])! };
   }
-  const starred: [string, Item][] = [];
-  for (const [day, e] of Object.entries(entries)) {
-    if (daysBetween(day, today) < 7) continue;
-    for (const it of e.items || []) if (it.starred && it.what?.trim()) starred.push([day, it]);
-  }
-  if (!starred.length) return null;
-  starred.sort((a, b) => hash(today + a[0] + a[1].what) - hash(today + b[0] + b[1].what));
-  return { title: '⭐ 예전에 별표한 순간', item: starred[0][1] };
+  return null;
 }
 
 // 보낼 내용. 보낼 필요가 없으면(이미 썼거나 보여 줄 기억이 없으면) null

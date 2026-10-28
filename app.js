@@ -176,6 +176,7 @@ function renderNudge() {
   }
   el.textContent = msg;
   el.hidden = !msg;
+  renderBackup();
 }
 
 function renderWrite() {
@@ -926,26 +927,88 @@ $('#morning-toggle').addEventListener('change', (ev) => {
   renderWrite();
 });
 
-$('#export').addEventListener('click', async () => {
+// 백업 파일을 저장한다. 끝까지 저장했으면 true
+async function exportBackup() {
   const name = `gratitude-journal-${todayKey()}.json`;
   const json = JSON.stringify(state, null, 2);
   // 아이폰 홈 화면 앱에서는 다운로드가 잘 안 되므로 공유 시트(파일에 저장, 에어드롭 등)를 쓴다
   const file = new File([json], name, { type: 'application/json' });
+  let message = '백업 파일을 내려받았어요.';
   if (navigator.canShare?.({ files: [file] }) && /iPhone|iPad|iPod/.test(navigator.userAgent)) {
     try {
       await navigator.share({ files: [file], title: '감사 일기 백업' });
-      $('#data-status').textContent = '백업 파일을 공유했어요.';
-      return;
+      message = '백업 파일을 저장했어요. "파일" 앱이나 iCloud Drive에 두면 안전해요.';
     } catch (err) {
-      if (err.name === 'AbortError') return;
+      if (err.name === 'AbortError') return false;
+      message = '';
     }
   }
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(file);
-  a.download = name;
-  a.click();
-  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
-  $('#data-status').textContent = '백업 파일을 내려받았어요.';
+  if (!message) {
+    $('#data-status').textContent = '백업 파일을 저장하지 못했어요. 다시 시도해 주세요.';
+    return false;
+  }
+  if (message.startsWith('백업 파일을 내려받')) {
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(file);
+    a.download = name;
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+  }
+  state.settings.lastBackup = Date.now();
+  persist();
+  $('#data-status').textContent = message;
+  renderBackup();
+  return true;
+}
+$('#export').addEventListener('click', exportBackup);
+
+// ---------- 백업 안전장치 ----------
+// 동기화를 켜지 않으면 기록은 이 기기에만 있다. 아이폰은 홈 화면 앱을 지우면 기록도 함께 지운다.
+const DAY_MS = 86_400_000;
+const BACKUP_EVERY_DAYS = 7;
+const BACKUP_SNOOZE_DAYS = 3;
+
+function backupInfo() {
+  const synced = !!Sync.info().email;
+  const entries = Object.values(state.entries).filter(hasContent);
+  const last = state.settings.lastBackup || 0;
+  const newest = Math.max(0, ...entries.map((e) => e.updatedAt || 0));
+  const daysSince = last ? Math.floor((Date.now() - last) / DAY_MS) : null;
+  // 백업 뒤에 새로 쓴 기록이 있고, 한 번도 백업하지 않았거나 일주일이 지났을 때
+  const due = !synced && entries.length > 0 && newest > last &&
+    (!last || Date.now() - last > BACKUP_EVERY_DAYS * DAY_MS);
+  return { synced, count: entries.length, last, daysSince, due };
+}
+
+function renderBackup() {
+  const b = backupInfo();
+  const lastText = b.last ? (b.daysSince === 0 ? '오늘' : `${b.daysSince}일 전`) : '아직 없음';
+  const status = $('#backup-status');
+  status.classList.toggle('warn', !b.synced);
+  status.textContent = b.synced
+    ? `☁️ 동기화 중이라 기록이 서버에도 저장돼요. 앱을 지우거나 폰을 바꿔도 로그인하면 돌아와요. (파일 백업: ${lastText})`
+    : `⚠️ 지금은 기록이 이 기기에만 있어요. 홈 화면 앱을 지우면 기록도 함께 지워져요. 동기화를 켜거나 파일로 백업해 두세요. (마지막 백업: ${lastText})`;
+
+  const snoozed = Date.now() < (state.settings.backupSnoozeUntil || 0);
+  const show = b.due && !snoozed && currentDate === todayKey();
+  $('#backup-banner').hidden = !show;
+  if (show) {
+    $('#backup-banner-text').textContent = b.last
+      ? `⚠️ 마지막 백업이 ${b.daysSince}일 전이에요. 그 뒤에 쓴 기록은 이 기기에만 있어요.`
+      : `⚠️ ${b.count}일 동안 쓴 기록이 이 기기에만 있어요. 홈 화면 앱을 지우면 함께 사라지니 백업해 두세요.`;
+  }
+}
+
+$('#banner-backup').addEventListener('click', exportBackup);
+$('#banner-sync').addEventListener('click', () => {
+  flushAll();
+  switchView('settings');
+  $('#sync-card').scrollIntoView({ behavior: 'smooth' });
+});
+$('#banner-later').addEventListener('click', () => {
+  state.settings.backupSnoozeUntil = Date.now() + BACKUP_SNOOZE_DAYS * DAY_MS;
+  persist();
+  renderBackup();
 });
 
 $('#import').addEventListener('change', async (ev) => {
@@ -1068,7 +1131,7 @@ Sync.init({
     if (view === 'view-review' && !editingReview) renderReview();
     if (view === 'view-people' && !letterEdited) renderPeople();
   },
-  onStatus: () => { renderSync(); Push.render(); },
+  onStatus: () => { renderSync(); Push.render(); renderBackup(); },
 });
 
 Push.init({

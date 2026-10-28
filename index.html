@@ -237,6 +237,22 @@
         </details>
       </div>
 
+      <div class="card" id="notify-card">
+        <span class="label">🔔 알림</span>
+        <p id="notify-status"></p>
+        <div id="notify-prefs">
+          <label class="row"><span><input type="checkbox" data-kind="daily"> 매일 쓰기 알림 <span class="muted">(이미 썼으면 안 보내요)</span></span><input type="time" data-time="daily"></label>
+          <label class="row"><span><input type="checkbox" data-kind="review"> 일요일 회고 알림</span><input type="time" data-time="review"></label>
+          <label class="row"><span><input type="checkbox" data-kind="memory"> 다시 찾아오는 감사 <span class="muted">(1년 전 오늘 등)</span></span><input type="time" data-time="memory"></label>
+        </div>
+        <div class="actions">
+          <button id="notify-on" class="primary">알림 켜기</button>
+          <button id="notify-test">테스트 알림</button>
+          <button id="notify-off">알림 끄기</button>
+        </div>
+        <p id="notify-msg" class="muted"></p>
+      </div>
+
       <div class="card">
         <span class="label">작성 화면</span>
         <label class="row">하루에 쓸 항목 수
@@ -261,6 +277,7 @@
 
   <script src="config.js"></script>
   <script src="sync.js"></script>
+  <script src="push.js"></script>
   <script src="app.js"></script>
 </body>
 </html>

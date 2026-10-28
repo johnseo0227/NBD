@@ -244,5 +244,9 @@ const Sync = (() => {
     window.addEventListener('offline', status);
   }
 
-  return { init, signIn, signUp, signOut, syncNow, markDirty, setServer, server, info };
+  return {
+    init, signIn, signUp, signOut, syncNow, markDirty, setServer, server, info,
+    request: api,
+    userId: () => s.session?.user.id || null,
+  };
 })();

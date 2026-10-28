@@ -1,12 +1,13 @@
 // 오프라인에서도 열리도록 앱 파일을 캐시한다.
 // 캐시된 파일을 먼저 보여주고, 온라인이면 뒤에서 새 버전을 받아 다음 실행 때 반영한다.
-const CACHE = 'gratitude-journal-v2';
+const CACHE = 'gratitude-journal-v3';
 const ASSETS = [
   './',
   'index.html',
   'style.css',
   'app.js',
   'sync.js',
+  'push.js',
   'config.js',
   'manifest.webmanifest',
   'icons/icon-192.png',
@@ -43,4 +44,36 @@ self.addEventListener('fetch', (ev) => {
       .catch(() => cached);
     return cached || network;
   }));
+});
+
+// 서버(send-reminders)가 보낸 알림을 보여 준다
+self.addEventListener('push', (ev) => {
+  let data = {};
+  try { data = ev.data ? ev.data.json() : {}; } catch { data = { body: ev.data?.text() }; }
+  const shown = self.registration.showNotification(data.title || '감사 일기', {
+    body: data.body || '',
+    icon: 'icons/icon-192.png',
+    badge: 'icons/icon-192.png',
+    tag: data.tag,
+    data: { url: data.url || './' },
+  });
+  const badge = data.badge && self.navigator.setAppBadge ? self.navigator.setAppBadge(data.badge).catch(() => {}) : null;
+  ev.waitUntil(Promise.all([shown, badge]));
+});
+
+// 알림을 누르면 앱을 열고 해당 화면으로 보낸다
+self.addEventListener('notificationclick', (ev) => {
+  ev.notification.close();
+  const url = new URL(ev.notification.data?.url || './', self.registration.scope);
+  const view = url.searchParams.get('view');
+  ev.waitUntil((async () => {
+    const windows = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
+    const open = windows.find((c) => c.url.startsWith(self.registration.scope));
+    if (open) {
+      await open.focus();
+      if (view) open.postMessage({ type: 'open-view', view });
+      return;
+    }
+    await self.clients.openWindow(url.href);
+  })());
 });

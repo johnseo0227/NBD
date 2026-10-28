@@ -3,4 +3,6 @@
 window.JOURNAL_CONFIG = {
   supabaseUrl: '',
   supabaseKey: '',
+  // 푸시 알림용 VAPID 공개키 (README의 "푸시 알림 설정" 참고)
+  vapidPublicKey: '',
 };

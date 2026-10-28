@@ -935,6 +935,8 @@ async function authAction(fn, okMsg) {
 $('#sync-signed-out').addEventListener('submit', (ev) => { ev.preventDefault(); authAction(Sync.signIn, '로그인했어요. 기록을 동기화합니다.'); });
 $('#sign-up').addEventListener('click', () => authAction(Sync.signUp, '가입하고 로그인했어요.'));
 $('#sign-out').addEventListener('click', async () => {
+  // 이 기기의 알림도 함께 끈다. 다른 사람이 이 기기로 로그인해도 내 기록으로 알림이 가지 않도록
+  if (Push.isOn()) await Push.disable();
   await Sync.signOut();
   $('#sync-msg').textContent = '로그아웃했어요. 이 기기의 기록은 그대로 남아 있어요.';
   renderSync();
@@ -967,7 +969,12 @@ Sync.init({
     if (view === 'view-review' && !editingReview) renderReview();
     if (view === 'view-people' && !letterEdited) renderPeople();
   },
-  onStatus: renderSync,
+  onStatus: () => { renderSync(); Push.render(); },
+});
+
+Push.init({
+  getPrefs: () => state.settings.notify,
+  setPrefs(p) { state.settings.notify = p; persist(); },
 });
 
 // ---------- 탭 ----------
@@ -1009,3 +1016,11 @@ navigator.storage?.persist?.().catch(() => {});
 
 renderAll();
 Sync.syncNow();
+
+// 알림을 눌러 열었을 때 해당 화면으로 이동한다 (./?view=review 등)
+const VIEWS = ['write', 'history', 'review', 'people', 'settings'];
+const openView = (view) => { if (VIEWS.includes(view)) { flushAll(); switchView(view); } };
+openView(new URLSearchParams(location.search).get('view'));
+navigator.serviceWorker?.addEventListener('message', (ev) => {
+  if (ev.data?.type === 'open-view') openView(ev.data.view);
+});

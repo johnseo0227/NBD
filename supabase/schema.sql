@@ -56,3 +56,34 @@ create policy "own docs: delete" on public.journal_docs
   for delete to authenticated using ((select auth.uid()) = user_id);
 
 grant select, insert, update, delete on public.journal_docs to authenticated;
+
+-- ---------- 푸시 알림 ----------
+-- 기기마다 하나씩. 앱이 알림을 켤 때 등록하고, send-reminders 함수가 이 표를 보고 알림을 보낸다.
+create table if not exists public.push_subscriptions (
+  endpoint   text        primary key,       -- 브라우저가 준 푸시 주소
+  user_id    uuid        not null default auth.uid() references auth.users (id) on delete cascade,
+  p256dh     text        not null,
+  auth       text        not null,
+  tz         text        not null default 'Asia/Seoul',
+  prefs      jsonb       not null default '{}',  -- { daily: { on, time: "21:30" }, review: {...}, memory: {...} }
+  last_sent  jsonb       not null default '{}',  -- 종류별로 마지막으로 보낸 현지 날짜. 하루에 두 번 보내지 않기 위함
+  created_at timestamptz not null default now()
+);
+
+alter table public.push_subscriptions enable row level security;
+
+drop policy if exists "own subscriptions: select" on public.push_subscriptions;
+drop policy if exists "own subscriptions: insert" on public.push_subscriptions;
+drop policy if exists "own subscriptions: update" on public.push_subscriptions;
+drop policy if exists "own subscriptions: delete" on public.push_subscriptions;
+
+create policy "own subscriptions: select" on public.push_subscriptions
+  for select to authenticated using ((select auth.uid()) = user_id);
+create policy "own subscriptions: insert" on public.push_subscriptions
+  for insert to authenticated with check ((select auth.uid()) = user_id);
+create policy "own subscriptions: update" on public.push_subscriptions
+  for update to authenticated using ((select auth.uid()) = user_id) with check ((select auth.uid()) = user_id);
+create policy "own subscriptions: delete" on public.push_subscriptions
+  for delete to authenticated using ((select auth.uid()) = user_id);
+
+grant select, insert, update, delete on public.push_subscriptions to authenticated;

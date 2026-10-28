@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>감사 일기</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="top">
+    <h1>감사 일기</h1>
+    <div id="streak" class="streak"></div>
+  </header>
+
+  <nav class="tabs" role="tablist">
+    <button class="tab active" data-view="write">오늘</button>
+    <button class="tab" data-view="history">기록</button>
+    <button class="tab" data-view="review">회고</button>
+    <button class="tab" data-view="settings">설정</button>
+  </nav>
+
+  <main>
+    <!-- 작성 -->
+    <section id="view-write" class="view active">
+      <div class="date-row">
+        <button id="prev-day" class="icon-btn" aria-label="이전 날">‹</button>
+        <input type="date" id="entry-date">
+        <button id="next-day" class="icon-btn" aria-label="다음 날">›</button>
+      </div>
+      <p id="nudge" class="nudge" hidden></p>
+
+      <div class="card">
+        <label class="label">쓰기 전 기분</label>
+        <div class="moods" data-field="moodBefore"></div>
+      </div>
+
+      <div id="items"></div>
+
+      <div class="card prompt-card">
+        <span class="label">떠오르지 않는다면</span>
+        <p id="prompt-text"></p>
+        <button id="new-prompt" class="link-btn">다른 질문</button>
+      </div>
+
+      <div class="card">
+        <label class="label" for="self">오늘의 나에게 고마운 점 (선택)</label>
+        <textarea id="self" rows="2" placeholder="예: 미루지 않고 운동을 다녀왔다"></textarea>
+      </div>
+
+      <div class="card">
+        <label class="label">쓴 후 기분</label>
+        <div class="moods" data-field="moodAfter"></div>
+      </div>
+
+      <div class="actions">
+        <button id="save" class="primary">저장</button>
+        <span id="save-status" class="muted"></span>
+      </div>
+    </section>
+
+    <!-- 기록 -->
+    <section id="view-history" class="view">
+      <div class="filter-row">
+        <input type="search" id="search" placeholder="검색 (사람, 단어…)">
+        <label class="check"><input type="checkbox" id="starred-only"> ⭐만</label>
+      </div>
+      <div id="history-list"></div>
+    </section>
+
+    <!-- 회고 -->
+    <section id="view-review" class="view">
+      <div class="date-row">
+        <button id="prev-week" class="icon-btn" aria-label="이전 주">‹</button>
+        <strong id="week-label"></strong>
+        <button id="next-week" class="icon-btn" aria-label="다음 주">›</button>
+      </div>
+      <div id="week-stats" class="stats"></div>
+      <div class="card">
+        <span class="label">이번 주 감사한 것들 — 가장 마음에 남은 것에 ⭐</span>
+        <div id="week-items"></div>
+      </div>
+      <div class="card">
+        <span class="label">자주 등장한 단어</span>
+        <div id="week-words" class="chips"></div>
+      </div>
+      <div class="card">
+        <label class="label" for="week-note">이번 주 회고 (고마움을 직접 전할 사람이 있나요?)</label>
+        <textarea id="week-note" rows="3"></textarea>
+        <div class="actions"><button id="save-week" class="primary">회고 저장</button><span id="week-status" class="muted"></span></div>
+      </div>
+    </section>
+
+    <!-- 설정 -->
+    <section id="view-settings" class="view">
+      <div class="card">
+        <span class="label">데이터</span>
+        <p class="muted">기록은 이 브라우저에만 저장됩니다. 기기를 바꾸거나 브라우저 데이터를 지우기 전에 내보내 두세요.</p>
+        <div class="actions">
+          <button id="export">JSON 내보내기</button>
+          <label class="file-btn">JSON 가져오기<input type="file" id="import" accept="application/json" hidden></label>
+        </div>
+        <p id="data-status" class="muted"></p>
+      </div>
+      <div class="card">
+        <span class="label">기록 개수</span>
+        <label class="row">하루에 쓸 항목 수
+          <select id="item-count"><option>1</option><option>2</option><option selected>3</option><option>4</option><option>5</option></select>
+        </label>
+      </div>
+    </section>
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>

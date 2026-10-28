@@ -855,12 +855,11 @@ $('#send-letter').addEventListener('click', async () => {
 });
 
 // ---------- 다시 찾아오는 감사 ----------
-// years/months 전의 같은 날짜. 그 달에 없는 날(예: 2월 30일)이면 null
-function shiftBack(k, { years = 0, months = 0 }) {
+// months 달 전의 같은 날짜. 그 달에 없는 날(예: 2월 30일)이면 null
+function shiftBack(k, months) {
   const d = fromKey(k);
   const day = d.getDate();
   d.setDate(1);
-  d.setFullYear(d.getFullYear() - years);
   d.setMonth(d.getMonth() - months);
   if (day > new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate()) return null;
   d.setDate(day);
@@ -887,8 +886,8 @@ function memoryCandidates(today, hardDay) {
   const starLabel = hardDay ? '😮‍💨 힘든 날엔, 이런 날도 있었어요' : '⭐ 예전에 별표한 순간';
 
   if (hardDay) starred.forEach(([d, it]) => add(starLabel, d, it));
-  for (const [shift, label] of [[{ years: 1 }, '📅 1년 전 오늘'], [{ months: 6 }, '📅 6개월 전 오늘'], [{ months: 1 }, '📅 한 달 전 오늘']]) {
-    const d = shiftBack(today, shift);
+  for (const [months, label] of [[6, '📅 6개월 전 오늘'], [1, '📅 한 달 전 오늘']]) {
+    const d = shiftBack(today, months);
     if (d && state.entries[d]) add(label, d, pickItem(state.entries[d]));
   }
   if (!hardDay) starred.forEach(([d, it]) => add(starLabel, d, it));

@@ -2,7 +2,7 @@
 // 기기마다 정한 시각(현지 시간)이 되면 하루에 한 번씩 알림을 보낸다.
 //   daily  : 매일 쓰기 알림. 그날 이미 썼으면 보내지 않는다
 //   review : 일요일 회고 알림. 그 주 회고를 이미 했으면 보내지 않는다
-//   memory : 1년·6개월·한 달 전 오늘, 또는 예전에 별표한 순간을 다시 보여 준다
+//   memory : 6개월·한 달 전 오늘, 또는 예전에 별표한 순간을 다시 보여 준다
 import { createClient } from 'npm:@supabase/supabase-js@2.115.0';
 import webpush from 'npm:web-push@3.6.7';
 
@@ -52,11 +52,10 @@ const dateToKey = (d: Date) => d.toISOString().slice(0, 10);
 export const addDays = (k: string, n: number) => { const d = keyToDate(k); d.setUTCDate(d.getUTCDate() + n); return dateToKey(d); };
 const daysBetween = (a: string, b: string) => Math.round((keyToDate(b).getTime() - keyToDate(a).getTime()) / 86_400_000);
 const weekStart = (k: string) => addDays(k, -((keyToDate(k).getUTCDay() + 6) % 7));
-function shiftBack(k: string, years: number, months: number): string | null {
+function shiftBack(k: string, months: number): string | null {
   const d = keyToDate(k);
   const day = d.getUTCDate();
   d.setUTCDate(1);
-  d.setUTCFullYear(d.getUTCFullYear() - years);
   d.setUTCMonth(d.getUTCMonth() - months);
   if (day > new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth() + 1, 0)).getUTCDate()) return null;
   d.setUTCDate(day);
@@ -95,8 +94,8 @@ function memoryFor(entries: Docs['entries'], today: string): { title: string; it
     const items = (e.items || []).filter((it) => it.what?.trim());
     return items.find((it) => it.starred) || items[0];
   };
-  for (const [years, months, title] of [[1, 0, '📅 1년 전 오늘'], [0, 6, '📅 6개월 전 오늘'], [0, 1, '📅 한 달 전 오늘']] as const) {
-    const d = shiftBack(today, years, months);
+  for (const [months, title] of [[6, '📅 6개월 전 오늘'], [1, '📅 한 달 전 오늘']] as const) {
+    const d = shiftBack(today, months);
     if (d && hasContent(entries[d])) return { title, item: pick(entries[d])! };
   }
   const starred: [string, Item][] = [];

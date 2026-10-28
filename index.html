@@ -26,13 +26,18 @@
 
   <nav class="tabs" role="tablist">
     <button class="tab active" data-view="write">오늘</button>
-    <button class="tab" data-view="history">기록</button>
+    <button class="tab" data-view="history">모아보기</button>
     <button class="tab" data-view="review">회고</button>
     <button class="tab" data-view="people">사람</button>
     <button class="tab" data-view="settings">설정</button>
   </nav>
 
   <main>
+    <div id="install-banner" class="install-banner" hidden>
+      <span id="install-text"></span>
+      <button id="install-btn" class="primary" hidden>설치</button>
+      <button id="install-close" class="icon-btn small-btn" aria-label="닫기">✕</button>
+    </div>
     <!-- 작성 -->
     <section id="view-write" class="view active">
       <div class="date-row">
@@ -89,6 +94,39 @@
 
     <!-- 기록 -->
     <section id="view-history" class="view">
+      <div id="ov-stats" class="stats stats-4"></div>
+
+      <div class="card">
+        <div class="card-head">
+          <span class="label">감사 달력 — 날짜를 누르면 그날 일기로</span>
+          <span class="year-nav">
+            <button id="prev-year" class="icon-btn small-btn" aria-label="이전 해">‹</button>
+            <strong id="year-label"></strong>
+            <button id="next-year" class="icon-btn small-btn" aria-label="다음 해">›</button>
+          </span>
+        </div>
+        <div id="heatmap" class="heatmap"></div>
+        <div class="legend"><span>적음</span><i class="l0"></i><i class="l1"></i><i class="l2"></i><i class="l3"></i><span>많음</span></div>
+      </div>
+
+      <div class="card">
+        <span class="label">가장 많이 고마웠던 사람</span>
+        <div id="ov-people" class="chips"></div>
+      </div>
+
+      <div class="card">
+        <span class="label">감사의 범주 (전체)</span>
+        <div id="ov-cats"></div>
+      </div>
+
+      <div class="card">
+        <span class="label">⭐ 모음</span>
+        <div id="ov-stars"></div>
+      </div>
+
+      <button id="open-book" class="primary wide">📖 감사 책으로 보기 · 인쇄 / PDF 저장</button>
+
+      <h2 class="section-title" id="all-entries">전체 기록</h2>
       <div class="filter-row">
         <input type="search" id="search" placeholder="검색 (사람, 단어…)">
         <label class="check"><input type="checkbox" id="starred-only"> ⭐만</label>
@@ -237,6 +275,26 @@
         </details>
       </div>
 
+      <div class="card" id="share-card">
+        <span class="label">📲 친구에게 소개하기</span>
+        <div class="share-row">
+          <div id="share-qr" class="qr" aria-label="앱 주소 QR 코드"></div>
+          <div>
+            <p class="share-text">카메라로 QR을 찍거나 링크를 보내 주세요. 친구는 자기 계정으로 가입해서 따로 써요. 서로의 일기는 볼 수 없어요.</p>
+            <button id="share-app" class="primary">링크 보내기</button>
+          </div>
+        </div>
+        <details>
+          <summary class="muted">설치 방법</summary>
+          <ul class="install-steps">
+            <li><b>아이폰</b>: Safari로 링크 열기 → 공유 버튼 → "홈 화면에 추가"</li>
+            <li><b>안드로이드</b>: Chrome으로 열기 → 메뉴 → "앱 설치"</li>
+            <li><b>윈도우·맥</b>: Edge나 Chrome으로 열기 → 주소창 오른쪽 설치 아이콘</li>
+          </ul>
+        </details>
+        <p id="share-msg" class="muted"></p>
+      </div>
+
       <div class="card" id="notify-card">
         <span class="label">🔔 알림</span>
         <p id="notify-status"></p>
@@ -275,6 +333,16 @@
     </section>
   </main>
 
+  <!-- 감사 책: 모든 기록을 달별로 모아 한 권처럼 보여 주고 인쇄할 수 있다 -->
+  <div id="book-view" hidden>
+    <div class="book-toolbar">
+      <button id="close-book">‹ 닫기</button>
+      <button id="print-book" class="primary">인쇄 / PDF 저장</button>
+    </div>
+    <article id="book"></article>
+  </div>
+
+  <script src="vendor/qrcode.js"></script>
   <script src="config.js"></script>
   <script src="sync.js"></script>
   <script src="push.js"></script>

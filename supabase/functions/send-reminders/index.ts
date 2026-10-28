@@ -23,7 +23,7 @@ export interface Docs { entries: Record<string, Entry>; reviews: Record<string, 
 export interface Payload { title: string; body: string; url: string; tag: string; badge?: number }
 
 const DEFAULT_PREFS: Record<Kind, { on: boolean; time: string }> = {
-  daily: { on: true, time: '21:30' },
+  daily: { on: true, time: '19:00' },
   review: { on: true, time: '20:00' },
   memory: { on: true, time: '08:30' },
 };
@@ -185,6 +185,34 @@ export async function run(deps: Deps, now = new Date()) {
   return result;
 }
 
+// 설정 확인용: 등록된 모든 기기에 예시 알림을 지금 바로 한 번 보낸다
+export const EXAMPLE: Payload = {
+  title: '감사 일기 · 알림 예시',
+  body: '매일 오후 7시에 이렇게 찾아올게요. 오늘 고마웠던 일 하나만 떠올려 볼까요?',
+  url: './?view=write',
+  tag: 'example',
+};
+
+export async function sendExample(deps: Deps) {
+  const result = { sent: 0, removed: 0, failed: 0 };
+  for (const sub of await deps.listSubscriptions()) {
+    try {
+      await deps.send(sub, EXAMPLE);
+      result.sent++;
+    } catch (err) {
+      const status = (err as { statusCode?: number }).statusCode;
+      if (status === 404 || status === 410) {
+        await deps.removeSubscription(sub.endpoint);
+        result.removed++;
+      } else {
+        console.error('push failed', status, (err as Error).message);
+        result.failed++;
+      }
+    }
+  }
+  return result;
+}
+
 function realDeps(): Deps {
   const db = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!, {
     auth: { persistSession: false },
@@ -235,8 +263,10 @@ if (!Deno.env.get('SEND_REMINDERS_TEST')) {
     if (req.headers.get('x-cron-secret') !== Deno.env.get('CRON_SECRET')) {
       return new Response('forbidden', { status: 403 });
     }
+    // 크론은 빈 본문으로 부르고, {"test": true}로 부르면 예시 알림을 보낸다
+    const body = await req.json().catch(() => ({}));
     try {
-      return Response.json(await run(realDeps()));
+      return Response.json(body?.test ? await sendExample(realDeps()) : await run(realDeps()));
     } catch (err) {
       console.error(err);
       return Response.json({ error: (err as Error).message }, { status: 500 });

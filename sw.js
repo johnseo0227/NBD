@@ -1,6 +1,6 @@
 // 오프라인에서도 열리도록 앱 파일을 캐시한다.
 // 캐시된 파일을 먼저 보여주고, 온라인이면 뒤에서 새 버전을 받아 다음 실행 때 반영한다.
-const CACHE = 'gratitude-journal-v3';
+const CACHE = 'gratitude-journal-v4';
 const ASSETS = [
   './',
   'index.html',
@@ -8,6 +8,7 @@ const ASSETS = [
   'app.js',
   'sync.js',
   'push.js',
+  'vendor/qrcode.js',
   'config.js',
   'manifest.webmanifest',
   'icons/icon-192.png',

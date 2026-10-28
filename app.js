@@ -368,8 +368,149 @@ $('#starred-only').addEventListener('change', renderHistory);
 $('#history-list').addEventListener('click', (ev) => {
   const edit = ev.target.dataset.edit;
   if (edit) { goToDate(edit); switchView('write'); return; }
-  if (ev.target.dataset.day) { toggleStar(ev.target.dataset.day, Number(ev.target.dataset.idx)); renderHistory(); }
+  if (ev.target.dataset.day) { toggleStar(ev.target.dataset.day, Number(ev.target.dataset.idx)); renderOverview(); renderHistory(); }
 });
+
+// ---------- 모아보기: 한눈에 ----------
+let overviewYear = fromKey(todayKey()).getFullYear();
+const writtenDays = () => Object.keys(state.entries).filter((k) => hasContent(state.entries[k])).sort();
+const countItems = (e) => e.items.filter((it) => it.what.trim()).length;
+
+function longestStreak() {
+  let best = 0;
+  let run = 0;
+  let prev = null;
+  for (const d of writtenDays()) {
+    run = prev && addDays(prev, 1) === d ? run + 1 : 1;
+    best = Math.max(best, run);
+    prev = d;
+  }
+  return best;
+}
+
+function renderOverview() {
+  const written = writtenDays();
+  const items = written.flatMap((k) => state.entries[k].items.map((it, idx) => ({ ...normItem(it), idx, day: k })).filter((it) => it.what));
+  const people = peopleCounts(written.map((k) => state.entries[k]));
+  $('#ov-stats').innerHTML = `
+    <div class="stat"><b>${written.length}</b><span>기록한 날</span></div>
+    <div class="stat"><b>${items.length}</b><span>감사한 것</span></div>
+    <div class="stat"><b>${people.length}</b><span>함께한 사람</span></div>
+    <div class="stat"><b>${longestStreak()}일</b><span>최장 연속</span></div>`;
+  renderHeatmap();
+
+  $('#ov-people').innerHTML = people.length
+    ? people.slice(0, 8).map(([p, n]) => `<button class="chip-btn" data-person="${esc(p)}">${esc(p)}<b>${n}</b></button>`).join('')
+    : '<span class="muted">"누구 덕분인가요?"를 채우면 여기에 모여요.</span>';
+
+  const cats = CATEGORIES.map((c) => [`${c.icon} ${c.label}`, items.filter((it) => it.category === c.id).length]);
+  $('#ov-cats').innerHTML = items.some((it) => catOf(it.category))
+    ? barRows(cats, Math.max(1, ...cats.map(([, n]) => n)))
+    : '<p class="muted">항목마다 범주를 고르면 내 감사가 어디에 많은지 보여요.</p>';
+
+  const stars = items.filter((it) => it.starred).reverse();
+  $('#ov-stars').innerHTML = stars.length
+    ? starList(stars.slice(0, 5)) + (stars.length > 5 ? `<button id="all-stars" class="link-btn">⭐ ${stars.length}개 모두 보기</button>` : '')
+    : '<p class="muted">마음에 남는 감사에 ⭐를 눌러 두면 여기 모여요.</p>';
+}
+
+// 한 해를 달력 12개로 보여 준다. 그날 감사한 개수만큼 진하게
+function renderHeatmap() {
+  const t = todayKey();
+  const thisYear = fromKey(t).getFullYear();
+  const minYear = Math.min(thisYear, ...Object.keys(state.entries).map((k) => Number(k.slice(0, 4))));
+  $('#year-label').textContent = `${overviewYear}년`;
+  $('#prev-year').disabled = overviewYear <= minYear;
+  $('#next-year').disabled = overviewYear >= thisYear;
+  let html = '';
+  for (let m = 1; m <= 12; m++) {
+    const lead = (new Date(overviewYear, m - 1, 1).getDay() + 6) % 7; // 월요일 시작
+    let cells = '<i class="pad"></i>'.repeat(lead);
+    for (let d = 1; d <= new Date(overviewYear, m, 0).getDate(); d++) {
+      const k = `${overviewYear}-${pad(m)}-${pad(d)}`;
+      const n = hasContent(state.entries[k]) ? countItems(state.entries[k]) : 0;
+      const today = k === t ? ' today' : '';
+      cells += n
+        ? `<button class="l${Math.min(n, 3)}${today}" data-day="${k}" title="${fmtDate(k)} · ${n}개" aria-label="${fmtDate(k)} 감사 ${n}개"></button>`
+        : `<i class="${k > t ? 'future' : ''}${today}"></i>`;
+    }
+    html += `<div class="hm-month"><b>${m}월</b><div class="hm-days">${cells}</div></div>`;
+  }
+  $('#heatmap').innerHTML = html;
+}
+
+$('#heatmap').addEventListener('click', (ev) => {
+  const day = ev.target.dataset.day;
+  if (!day) return;
+  goToDate(day);
+  switchView('write');
+});
+$('#prev-year').addEventListener('click', () => { overviewYear--; renderHeatmap(); });
+$('#next-year').addEventListener('click', () => { overviewYear++; renderHeatmap(); });
+$('#ov-people').addEventListener('click', (ev) => {
+  const name = ev.target.closest('.chip-btn')?.dataset.person;
+  if (!name) return;
+  currentPerson = name;
+  letterEdited = false;
+  letterExcluded = new Set();
+  switchView('people');
+});
+$('#ov-stars').addEventListener('click', (ev) => {
+  if (ev.target.id === 'all-stars') {
+    $('#starred-only').checked = true;
+    renderHistory();
+    $('#all-entries').scrollIntoView({ behavior: 'smooth' });
+    return;
+  }
+  if (!ev.target.dataset.day) return;
+  toggleStar(ev.target.dataset.day, Number(ev.target.dataset.idx));
+  renderOverview();
+  renderHistory();
+});
+
+// ---------- 감사 책 ----------
+function renderBook() {
+  const days = Object.keys(state.entries).filter((k) => hasContent(state.entries[k]) || state.entries[k].self).sort();
+  if (!days.length) {
+    $('#book').innerHTML = '<p class="empty">아직 기록이 없어요.</p>';
+    return;
+  }
+  const total = days.reduce((n, k) => n + countItems(state.entries[k]), 0);
+  const months = [...new Set(days.map(monthKey))];
+  let html = `<h1>나의 감사 책</h1>
+    <p class="book-sub">${fmtDateY(days[0])} – ${fmtDateY(days.at(-1))}<br>${days.length}일 동안 ${total}가지에 감사했어요</p>`;
+  for (const m of months) {
+    const [y, mo] = m.split('-').map(Number);
+    html += `<section class="month"><h2>${y}년 ${mo}월</h2>`;
+    for (const k of days.filter((d) => monthKey(d) === m)) {
+      const e = state.entries[k];
+      const items = e.items.map(normItem).filter((it) => it.what);
+      html += `<div class="book-day"><h3>${fmtDate(k)}${e.hardDay ? ' 😮‍💨' : ''}</h3><ul>${items.map((it) => `<li>${it.starred ? '⭐ ' : ''}${esc(it.what)}${
+        it.who ? ` <span class="note">— ${esc(splitPeople(it.who).join(', '))} 덕분에</span>` : ''}${
+        it.why ? `<br><span class="why">${esc(it.why)}</span>` : ''}</li>`).join('')}</ul>${
+        e.self ? `<p class="note">🙋 나에게: ${esc(e.self)}</p>` : ''}</div>`;
+    }
+    const reviews = Object.keys(state.reviews).filter((w) => monthKey(w) === m).sort()
+      .map((w) => state.reviews[w]).filter((r) => r.note || r.deep || (r.thanksSent && r.thanksTo));
+    if (reviews.length) {
+      html += `<div class="reviews"><b>이 달의 회고</b><ul>${reviews.map((r) => `<li>${[
+        r.note && esc(r.note),
+        r.deep && `<span class="why">이게 없었다면: ${esc(r.deep)}</span>`,
+        r.thanksSent && r.thanksTo && `<span class="why">💌 ${esc(r.thanksTo)}에게 마음을 전함</span>`,
+      ].filter(Boolean).join('<br>')}</li>`).join('')}</ul></div>`;
+    }
+    html += '</section>';
+  }
+  $('#book').innerHTML = html;
+}
+
+$('#open-book').addEventListener('click', () => {
+  renderBook();
+  $('#book-view').hidden = false;
+  $('#book-view').scrollTop = 0;
+});
+$('#close-book').addEventListener('click', () => { $('#book-view').hidden = true; });
+$('#print-book').addEventListener('click', () => window.print());
 
 // ---------- 회고: 공통 ----------
 function topWords(texts) {
@@ -965,7 +1106,7 @@ Sync.init({
     const editingReview = reviewTimer !== null;
     if (!editingEntry && keys.includes(`entry|${currentDate}`)) { draft = getDraft(); renderWrite(); }
     const view = document.querySelector('.view.active').id;
-    if (view === 'view-history') renderHistory();
+    if (view === 'view-history') { renderOverview(); renderHistory(); }
     if (view === 'view-review' && !editingReview) renderReview();
     if (view === 'view-people' && !letterEdited) renderPeople();
   },
@@ -977,14 +1118,71 @@ Push.init({
   setPrefs(p) { state.settings.notify = p; persist(); },
 });
 
+// ---------- 설치와 소개 ----------
+const appUrl = () => new URL('./', location.href).href;
+const isStandalone = () => window.matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
+let installEvent = null;
+
+function renderInstallBanner() {
+  const ios = /iPhone|iPad|iPod/.test(navigator.userAgent);
+  const show = !isStandalone() && !state.settings.installDismissed && (installEvent || ios);
+  $('#install-banner').hidden = !show;
+  if (!show) return;
+  $('#install-text').textContent = installEvent
+    ? '📲 앱으로 설치하면 홈 화면에서 바로 열고 알림도 받을 수 있어요.'
+    : '📲 아래 공유 버튼 → "홈 화면에 추가"를 누르면 앱처럼 쓰고 알림도 받을 수 있어요.';
+  $('#install-btn').hidden = !installEvent;
+}
+// 크롬·엣지·안드로이드: 브라우저의 설치 창을 우리 버튼으로 띄운다
+window.addEventListener('beforeinstallprompt', (ev) => {
+  ev.preventDefault();
+  installEvent = ev;
+  renderInstallBanner();
+});
+window.addEventListener('appinstalled', () => { installEvent = null; renderInstallBanner(); });
+$('#install-btn').addEventListener('click', async () => {
+  if (!installEvent) return;
+  installEvent.prompt();
+  await installEvent.userChoice.catch(() => {});
+  installEvent = null;
+  renderInstallBanner();
+});
+$('#install-close').addEventListener('click', () => {
+  state.settings.installDismissed = true;
+  persist();
+  renderInstallBanner();
+});
+
+function renderShare() {
+  if (typeof qrcode !== 'function' || $('#share-qr').dataset.url === appUrl()) return;
+  const qr = qrcode(0, 'M');
+  qr.addData(appUrl());
+  qr.make();
+  $('#share-qr').innerHTML = qr.createSvgTag({ cellSize: 4, margin: 2, scalable: true });
+  $('#share-qr').dataset.url = appUrl();
+}
+$('#share-app').addEventListener('click', async () => {
+  const text = '매일 감사한 일을 기록하는 "감사 일기" 앱이에요. 아이폰은 Safari로 열어 공유 → "홈 화면에 추가"를 누르면 앱처럼 쓸 수 있어요.';
+  try {
+    if (navigator.share) {
+      await navigator.share({ title: '감사 일기', text, url: appUrl() });
+    } else {
+      await navigator.clipboard.writeText(`${text}\n${appUrl()}`);
+      $('#share-msg').textContent = '링크를 복사했어요. 메신저에 붙여 넣어 보내세요.';
+    }
+  } catch (err) {
+    if (err.name !== 'AbortError') $('#share-msg').textContent = `주소를 직접 알려 주세요: ${appUrl()}`;
+  }
+});
+
 // ---------- 탭 ----------
 function switchView(name) {
   document.querySelectorAll('.tab').forEach((t) => t.classList.toggle('active', t.dataset.view === name));
   document.querySelectorAll('.view').forEach((v) => v.classList.toggle('active', v.id === `view-${name}`));
-  if (name === 'history') renderHistory();
+  if (name === 'history') { renderOverview(); renderHistory(); }
   if (name === 'review') renderReview();
   if (name === 'write') { draft = getDraft(); renderWrite(); }
-  if (name === 'settings') renderSync();
+  if (name === 'settings') { renderSync(); renderShare(); }
   if (name === 'people') renderPeople();
 }
 document.querySelector('.tabs').addEventListener('click', (ev) => {
@@ -996,6 +1194,7 @@ document.querySelector('.tabs').addEventListener('click', (ev) => {
 });
 
 function renderAll() {
+  renderInstallBanner();
   renderStreak();
   renderWrite();
   renderSync();

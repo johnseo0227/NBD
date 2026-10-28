@@ -161,3 +161,62 @@ details[open] summary { margin-bottom: 8px; }
 .daybars span i.neg { background: var(--muted); }
 .daybars span.none::after { content: ''; position: absolute; left: 0; right: 0; top: 50%; border-top: 1px dotted var(--border); }
 .axis { display: flex; justify-content: space-between; font-size: .7rem; color: var(--muted); }
+
+.stats-4 { grid-template-columns: repeat(4, 1fr); }
+@media (max-width: 480px) { .stats-4 { grid-template-columns: repeat(2, 1fr); } }
+.card-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 6px; }
+.card-head .label { margin: 0; }
+.year-nav { display: flex; align-items: center; gap: 6px; }
+.small-btn { padding: 2px 8px; font-size: 1rem; }
+button.wide { width: 100%; padding: 12px; margin: 4px 0 20px; }
+.section-title { font-size: 1.05rem; margin: 8px 0 10px; }
+
+.heatmap { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px 10px; }
+@media (min-width: 560px) { .heatmap { grid-template-columns: repeat(4, 1fr); } }
+.hm-month b { display: block; font-size: .75rem; color: var(--muted); margin-bottom: 3px; font-weight: 600; }
+.hm-days { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; }
+.hm-days i, .legend i { display: block; aspect-ratio: 1; border-radius: 3px; background: var(--border); opacity: .45; }
+.hm-days i.pad { visibility: hidden; }
+.hm-days i.future { opacity: .15; }
+.hm-days button { padding: 0; border: 0; aspect-ratio: 1; border-radius: 3px; cursor: pointer; }
+.l1 { background: color-mix(in srgb, var(--accent) 40%, transparent) !important; opacity: 1 !important; }
+.l2 { background: color-mix(in srgb, var(--accent) 70%, transparent) !important; opacity: 1 !important; }
+.l3 { background: var(--accent) !important; opacity: 1 !important; }
+.hm-days .today { outline: 2px solid var(--text); outline-offset: -1px; }
+.legend { display: flex; align-items: center; justify-content: flex-end; gap: 3px; margin-top: 10px; font-size: .7rem; color: var(--muted); }
+.legend i { width: 10px; }
+.legend span { margin: 0 3px; }
+.chip-btn { border: 0; background: var(--accent-soft); border-radius: 999px; padding: 4px 12px; font-size: .9rem; }
+.chip-btn b { color: var(--accent); margin-left: 4px; }
+
+#book-view { position: fixed; inset: 0; z-index: 10; background: var(--bg); overflow-y: auto; }
+.book-toolbar { position: sticky; top: 0; display: flex; justify-content: space-between; gap: 8px; padding: max(10px, env(safe-area-inset-top)) 16px 10px; background: var(--bg); border-bottom: 1px solid var(--border); }
+#book { max-width: 640px; margin: 0 auto; padding: 24px 20px calc(48px + env(safe-area-inset-bottom)); font-family: "Noto Serif KR", "AppleMyungjo", "Batang", serif; line-height: 1.7; }
+#book h1 { font-size: 1.8rem; margin: 24px 0 4px; text-align: center; }
+#book .book-sub { text-align: center; color: var(--muted); margin: 0 0 32px; font-size: .9rem; }
+#book h2 { font-size: 1.25rem; border-bottom: 2px solid var(--accent); padding-bottom: 4px; margin: 36px 0 12px; }
+#book h3 { font-size: 1rem; margin: 18px 0 4px; }
+#book ul { margin: 0; padding-left: 1.2em; }
+#book li { margin: 2px 0; }
+#book .why, #book .note { color: var(--muted); font-size: .9rem; }
+#book .reviews { background: var(--accent-soft); border-radius: 8px; padding: 10px 14px; margin-top: 16px; font-size: .92rem; }
+
+@media print {
+  body > *:not(#book-view) { display: none !important; }
+  #book-view { position: static; overflow: visible; background: #fff; }
+  .book-toolbar { display: none; }
+  #book { color: #000; max-width: none; padding: 0; }
+  #book h2 { break-after: avoid; }
+  #book section.month { break-before: page; }
+  #book section.month:first-of-type { break-before: auto; }
+  #book .book-day { break-inside: avoid; }
+}
+
+.install-banner { display: flex; align-items: center; gap: 8px; background: var(--accent-soft); border-radius: 12px; padding: 10px 12px; margin-top: 12px; font-size: .9rem; }
+.install-banner[hidden] { display: none; }
+.install-banner span { flex: 1; }
+.share-row { display: flex; gap: 14px; align-items: center; }
+.qr { flex: 0 0 120px; width: 120px; background: #fff; border-radius: 8px; padding: 4px; }
+.qr svg { display: block; width: 100%; height: auto; }
+.share-text { margin: 0 0 8px; font-size: .88rem; }
+.install-steps { margin: 4px 0 0; padding-left: 1.2em; font-size: .88rem; }

@@ -4,7 +4,7 @@
 // 정한 시각에 알림을 보낸다. 알림 내용이 내 기록에 따라 달라지므로 동기화 로그인이 필요하다.
 const Push = (() => {
   const DEFAULTS = {
-    daily: { on: true, time: '21:30' },
+    daily: { on: true, time: '19:00' },
     review: { on: true, time: '20:00' },
     memory: { on: true, time: '08:30' },
   };

@@ -18,7 +18,10 @@
 <body>
   <header class="top">
     <h1>감사 일기</h1>
-    <div id="streak" class="streak"></div>
+    <div class="top-right">
+      <span id="sync-badge" class="sync-badge" hidden></span>
+      <span id="streak" class="streak"></span>
+    </div>
   </header>
 
   <nav class="tabs" role="tablist">
@@ -38,11 +41,21 @@
       </div>
       <p id="nudge" class="nudge" hidden></p>
 
+      <div class="mode-row">
+        <button type="button" id="hard-day" class="toggle-chip" aria-pressed="false">😮‍💨 오늘은 힘든 날</button>
+      </div>
+
+      <div id="intention-card" class="card" hidden>
+        <label class="label" for="intention">🌅 아침: 오늘을 좋은 날로 만들 한 가지</label>
+        <input type="text" id="intention" placeholder="예: 점심에 10분 산책하기">
+      </div>
+
       <div class="card">
-        <label class="label">쓰기 전 기분</label>
+        <span class="label">쓰기 전 기분</span>
         <div class="moods" data-field="moodBefore"></div>
       </div>
 
+      <p id="items-hint" class="muted hint"></p>
       <div id="items"></div>
 
       <div class="card prompt-card">
@@ -52,12 +65,12 @@
       </div>
 
       <div class="card">
-        <label class="label" for="self">오늘의 나에게 고마운 점 (선택)</label>
+        <label class="label" for="self">🙋 오늘의 나에게 고마운 점 (선택)</label>
         <textarea id="self" rows="2" placeholder="예: 미루지 않고 운동을 다녀왔다"></textarea>
       </div>
 
       <div class="card">
-        <label class="label">쓴 후 기분</label>
+        <span class="label">쓴 후 기분</span>
         <div class="moods" data-field="moodAfter"></div>
       </div>
 
@@ -78,47 +91,133 @@
 
     <!-- 회고 -->
     <section id="view-review" class="view">
-      <div class="date-row">
-        <button id="prev-week" class="icon-btn" aria-label="이전 주">‹</button>
-        <strong id="week-label"></strong>
-        <button id="next-week" class="icon-btn" aria-label="다음 주">›</button>
+      <div class="segmented" role="tablist">
+        <button class="seg active" data-period="week">주간</button>
+        <button class="seg" data-period="month">월간</button>
       </div>
-      <div id="week-stats" class="stats"></div>
-      <div class="card">
-        <span class="label">이번 주 감사한 것들 — 가장 마음에 남은 것에 ⭐</span>
-        <div id="week-items"></div>
+
+      <div id="review-week">
+        <div class="date-row">
+          <button id="prev-week" class="icon-btn" aria-label="이전 주">‹</button>
+          <strong id="week-label"></strong>
+          <button id="next-week" class="icon-btn" aria-label="다음 주">›</button>
+        </div>
+        <div id="week-stats" class="stats"></div>
+
+        <div class="card">
+          <span class="label">① 이번 주 감사한 것들 — 가장 마음에 남은 것에 ⭐</span>
+          <div id="week-items"></div>
+        </div>
+
+        <div class="card">
+          <span class="label">② 하나를 골라 깊이 쓰기</span>
+          <select id="deep-pick"></select>
+          <label class="label sub" for="deep-text">이게 없었다면 내 한 주는 어땠을까요?</label>
+          <textarea id="deep-text" rows="3" placeholder="없었다면 어떤 점이 아쉬웠을지, 그래서 지금 어떤 마음이 드는지"></textarea>
+        </div>
+
+        <div class="card">
+          <span class="label">③ 고마움 전하기</span>
+          <p class="muted small">감사를 전하는 사람은 받는 사람이 얼마나 기뻐할지를 늘 과소평가한다고 해요. 짧게라도 보내 보세요.</p>
+          <input type="text" id="thanks-to" list="people-list" placeholder="누구에게?">
+          <datalist id="people-list"></datalist>
+          <textarea id="thanks-msg" rows="3" placeholder="예: 지난 화요일에 커피 사 줘서 정말 고마웠어. 덕분에 힘든 하루를 버텼어."></textarea>
+          <div class="actions">
+            <button id="send-thanks">보내기 (공유)</button>
+            <label class="check"><input type="checkbox" id="thanks-sent"> 전했어요</label>
+          </div>
+        </div>
+
+        <div class="card">
+          <span class="label">자주 등장한 단어</span>
+          <div id="week-words" class="chips"></div>
+        </div>
+
+        <div class="card">
+          <label class="label" for="week-note">④ 이번 주 한 줄 회고</label>
+          <textarea id="week-note" rows="2"></textarea>
+          <p id="week-status" class="muted"></p>
+        </div>
       </div>
-      <div class="card">
-        <span class="label">자주 등장한 단어</span>
-        <div id="week-words" class="chips"></div>
-      </div>
-      <div class="card">
-        <label class="label" for="week-note">이번 주 회고 (고마움을 직접 전할 사람이 있나요?)</label>
-        <textarea id="week-note" rows="3"></textarea>
-        <div class="actions"><button id="save-week" class="primary">회고 저장</button><span id="week-status" class="muted"></span></div>
+
+      <div id="review-month" hidden>
+        <div class="date-row">
+          <button id="prev-month" class="icon-btn" aria-label="이전 달">‹</button>
+          <strong id="month-label"></strong>
+          <button id="next-month" class="icon-btn" aria-label="다음 달">›</button>
+        </div>
+        <div id="month-stats" class="stats"></div>
+        <div class="card">
+          <span class="label">고마운 사람 순위</span>
+          <div id="month-people"></div>
+        </div>
+        <div class="card">
+          <span class="label">감사의 범주</span>
+          <div id="month-cats"></div>
+        </div>
+        <div class="card">
+          <span class="label">이 달의 ⭐</span>
+          <div id="month-stars"></div>
+        </div>
       </div>
     </section>
 
     <!-- 설정 -->
     <section id="view-settings" class="view">
+      <div class="card" id="sync-card">
+        <span class="label">동기화 (아이폰 ↔ 윈도우)</span>
+        <div id="sync-unconfigured" hidden>
+          <p class="muted">동기화 서버가 아직 설정되지 않았어요. 아래 "서버 설정"에 Supabase 주소와 키를 넣어 주세요.</p>
+        </div>
+        <form id="sync-signed-out" hidden>
+          <input type="email" id="sync-email" placeholder="이메일" autocomplete="username" required>
+          <input type="password" id="sync-password" placeholder="비밀번호 (6자 이상)" autocomplete="current-password" minlength="6" required>
+          <div class="actions">
+            <button type="submit" class="primary" id="sign-in">로그인</button>
+            <button type="button" id="sign-up">회원가입</button>
+          </div>
+        </form>
+        <div id="sync-signed-in" hidden>
+          <p><strong id="sync-user"></strong> 계정으로 동기화 중</p>
+          <p id="sync-detail" class="muted"></p>
+          <div class="actions">
+            <button id="sync-now">지금 동기화</button>
+            <button id="sign-out">로그아웃</button>
+          </div>
+        </div>
+        <p id="sync-msg" class="muted"></p>
+        <details>
+          <summary class="muted">서버 설정</summary>
+          <input type="url" id="server-url" placeholder="https://xxxx.supabase.co">
+          <input type="text" id="server-key" placeholder="anon(publishable) key">
+          <div class="actions"><button id="save-server">저장</button></div>
+        </details>
+      </div>
+
       <div class="card">
-        <span class="label">데이터</span>
-        <p class="muted">기록은 이 브라우저에만 저장됩니다. 기기를 바꾸거나 브라우저 데이터를 지우기 전에 내보내 두세요.</p>
+        <span class="label">작성 화면</span>
+        <label class="row">하루에 쓸 항목 수
+          <select id="item-count"><option>1</option><option>2</option><option selected>3</option><option>4</option><option>5</option></select>
+        </label>
+        <label class="row">아침 질문 보이기 (Five Minute Journal 방식)
+          <input type="checkbox" id="morning-toggle">
+        </label>
+      </div>
+
+      <div class="card">
+        <span class="label">백업</span>
+        <p class="muted">기록은 이 기기에 저장되고, 로그인하면 서버와 동기화됩니다. 파일로도 백업해 둘 수 있어요.</p>
         <div class="actions">
           <button id="export">JSON 내보내기</button>
           <label class="file-btn">JSON 가져오기<input type="file" id="import" accept="application/json" hidden></label>
         </div>
         <p id="data-status" class="muted"></p>
       </div>
-      <div class="card">
-        <span class="label">기록 개수</span>
-        <label class="row">하루에 쓸 항목 수
-          <select id="item-count"><option>1</option><option>2</option><option selected>3</option><option>4</option><option>5</option></select>
-        </label>
-      </div>
     </section>
   </main>
 
+  <script src="config.js"></script>
+  <script src="sync.js"></script>
   <script src="app.js"></script>
 </body>
 </html>

@@ -2,11 +2,18 @@
 
 const STORAGE_KEY = 'gratitude-journal-v1';
 const MOODS = ['😞', '😕', '😐', '🙂', '😄'];
+const CATEGORIES = [
+  { id: 'people', label: '사람', icon: '🧑‍🤝‍🧑' },
+  { id: 'experience', label: '경험', icon: '✨' },
+  { id: 'self', label: '나', icon: '🙋' },
+  { id: 'nature', label: '자연', icon: '🌿' },
+  { id: 'things', label: '물건·환경', icon: '🏠' },
+];
 const PROMPTS = [
   '오늘 나를 도와준 사람은 누구였나요?',
   '당연하게 여겼지만 사실 고마운 것은? (건강, 집, 물…)',
   '오늘 작게 웃었던 순간은?',
-  '힘들었던 일 속에서 배운 것은?',
+  '오늘 뜻밖에 좋았던 일은?',
   '오늘 먹은 것 중 가장 맛있었던 것은?',
   '오늘 내 몸이 해낸 일은?',
   '최근 누군가 건넨 말 중 기억에 남는 것은?',
@@ -14,9 +21,16 @@ const PROMPTS = [
   '오늘 날씨나 자연에서 좋았던 점은?',
   '1년 전의 나는 갖지 못했지만 지금은 가진 것은?',
   '오늘 배운 새로운 것은?',
-  '오늘 편리하게 써 준 기술이나 서비스는?',
+  '오늘 누군가를 도왔다면, 그 기회가 고마운 이유는?',
 ];
-const STOPWORDS = new Set(['오늘', '정말', '너무', '그리고', '그래서', '있었다', '했다', '좋았다', '고마웠다', '감사했다', '것이', '수가', '덕분에', '같다', '나를', '내가', '나의']);
+const HARD_PROMPTS = [
+  '힘들었지만 그래도 버틸 수 있게 해 준 것은?',
+  '오늘 아주 잠깐이라도 숨 돌릴 수 있었던 순간은?',
+  '힘든 하루 속에서 나를 걱정해 준 사람은?',
+  '이 어려움 속에서 배우고 있는 것은?',
+  '그래도 오늘 해낸 아주 작은 일 하나는?',
+];
+const STOPWORDS = new Set(['오늘', '정말', '너무', '그리고', '그래서', '있었다', '했다', '좋았다', '고마웠다', '감사했다', '것이', '수가', '덕분에', '같다', '나를', '내가', '나의', '났다', '있다', '없다', '하는', '해서']);
 const PARTICLES = /(에게서|에서|에게|한테|께서|으로|로|은|는|이|가|을|를|와|과|도|의|에|랑|이랑)$/;
 
 // ---------- 저장소 ----------
@@ -24,9 +38,13 @@ function load() {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     const data = raw ? JSON.parse(raw) : {};
-    return { entries: data.entries || {}, reviews: data.reviews || {}, settings: { itemCount: 3, ...(data.settings || {}) } };
+    return {
+      entries: data.entries || {},
+      reviews: data.reviews || {},
+      settings: { itemCount: 3, morning: false, ...(data.settings || {}) },
+    };
   } catch {
-    return { entries: {}, reviews: {}, settings: { itemCount: 3 } };
+    return { entries: {}, reviews: {}, settings: { itemCount: 3, morning: false } };
   }
 }
 function persist() {
@@ -39,6 +57,12 @@ function persist() {
 }
 let state = load();
 
+const COLLECTION = { entry: 'entries', review: 'reviews' };
+// 기록이 바뀔 때마다 호출: 동기화 대기열에 올린다
+function changed(kind, key, ts) {
+  Sync.markDirty(kind, key, ts);
+}
+
 // ---------- 날짜 ----------
 const pad = (n) => String(n).padStart(2, '0');
 const toKey = (d) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
@@ -48,12 +72,23 @@ const todayKey = () => toKey(new Date());
 const WEEKDAYS = ['일', '월', '화', '수', '목', '금', '토'];
 const fmtDate = (k) => { const d = fromKey(k); return `${d.getMonth() + 1}월 ${d.getDate()}일 (${WEEKDAYS[d.getDay()]})`; };
 const weekStart = (k) => { const d = fromKey(k); const diff = (d.getDay() + 6) % 7; return addDays(k, -diff); };
+const monthKey = (k) => k.slice(0, 7);
+const addMonths = (m, n) => { const [y, mo] = m.split('-').map(Number); const d = new Date(y, mo - 1 + n, 1); return `${d.getFullYear()}-${pad(d.getMonth() + 1)}`; };
 
 // ---------- 유틸 ----------
 const $ = (sel) => document.querySelector(sel);
-const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const norm = (s) => s.replace(/[\s.,!?~·…'"]/g, '').toLowerCase();
-const hasContent = (e) => e && e.items.some((it) => it.what.trim());
+const hasContent = (e) => !!e && e.items.some((it) => it.what.trim());
+const normItem = (it) => ({ what: '', why: '', who: '', category: null, role: '', starred: false, ...it });
+const splitPeople = (who) => (who || '').split(/[,，、/]+/).map((s) => s.trim()).filter(Boolean);
+const catOf = (id) => CATEGORIES.find((c) => c.id === id);
+
+function itemTags(it) {
+  const c = catOf(it.category);
+  return (c ? `<span class="tag">${c.icon} ${c.label}</span>` : '') +
+    splitPeople(it.who).map((p) => `<span class="tag">@${esc(p)}</span>`).join('');
+}
 
 // ---------- 연속 기록 ----------
 function renderStreak() {
@@ -69,15 +104,18 @@ function renderStreak() {
 let currentDate = todayKey();
 let promptIdx = Math.floor(Math.random() * PROMPTS.length);
 
-function blankEntry() {
-  return { moodBefore: null, moodAfter: null, items: [], self: '' };
-}
 function getDraft() {
-  const e = state.entries[currentDate] ? structuredClone(state.entries[currentDate]) : blankEntry();
-  while (e.items.length < state.settings.itemCount) e.items.push({ what: '', why: '', starred: false });
+  const saved = state.entries[currentDate];
+  const e = saved
+    ? { hardDay: false, intention: '', self: '', ...structuredClone(saved) }
+    : { moodBefore: null, moodAfter: null, items: [], self: '', hardDay: false, intention: '' };
+  e.items = e.items.map(normItem);
+  while (e.items.length < state.settings.itemCount) e.items.push(normItem({}));
   return e;
 }
 let draft = getDraft();
+
+const prompts = () => (draft.hardDay ? HARD_PROMPTS : PROMPTS);
 
 function renderMoods() {
   document.querySelectorAll('.moods').forEach((box) => {
@@ -88,15 +126,26 @@ function renderMoods() {
 }
 
 function renderItems() {
+  const placeholder = draft.hardDay ? '힘들었지만 그래도 고마웠던 것' : '무엇이 감사했나요? (구체적으로)';
+  $('#items-hint').textContent = draft.hardDay
+    ? '힘든 날엔 하나만 써도 충분해요.'
+    : '많이보다 깊게. 하나만 써도 괜찮아요.';
   $('#items').innerHTML = draft.items.map((it, i) => `
     <div class="card item" data-i="${i}">
       <div class="item-head">
         <span class="item-num">${i + 1}.</span>
         <button type="button" class="star${it.starred ? ' on' : ''}" data-act="star" aria-label="별표">★</button>
       </div>
-      <input type="text" data-field="what" placeholder="무엇이 감사했나요? (구체적으로)" value="${esc(it.what)}">
+      <input type="text" data-field="what" placeholder="${placeholder}" value="${esc(it.what)}">
       <span class="dup-warn" hidden></span>
       <textarea data-field="why" rows="2" placeholder="왜 고마웠나요?">${esc(it.why)}</textarea>
+      <div class="cats">${CATEGORIES.map((c) =>
+        `<button type="button" class="cat${it.category === c.id ? ' on' : ''}" data-cat="${c.id}">${c.icon} ${c.label}</button>`).join('')}</div>
+      <input type="text" data-field="who" placeholder="누구 덕분인가요? (선택)" value="${esc(it.who)}" list="people-list">
+      <details${it.role ? ' open' : ''}>
+        <summary class="muted">내가 한 역할도 적기</summary>
+        <input type="text" data-field="role" placeholder="예: 먼저 연락한 건 나였다" value="${esc(it.role)}">
+      </details>
     </div>`).join('');
   draft.items.forEach((_, i) => checkDuplicate(i));
 }
@@ -120,25 +169,41 @@ function checkDuplicate(i) {
 function renderNudge() {
   const t = todayKey();
   const el = $('#nudge');
-  if (currentDate === t && !hasContent(state.entries[t]) && !hasContent(state.entries[addDays(t, -1)]) &&
-      Object.values(state.entries).some(hasContent)) {
-    el.textContent = '어제는 쉬었네요. 이틀 연속으로 빠지지만 않으면 습관은 유지돼요. 하나만 써도 괜찮아요!';
-    el.hidden = false;
-  } else {
-    el.hidden = true;
+  let msg = '';
+  if (currentDate === t) {
+    const isSunday = fromKey(t).getDay() === 0;
+    const reviewed = state.reviews[weekStart(t)];
+    if (isSunday && !reviewed) {
+      msg = '일요일이에요. 회고 탭에서 이번 주를 돌아보고 고마운 사람에게 마음을 전해 보세요.';
+    } else if (!hasContent(state.entries[t]) && !hasContent(state.entries[addDays(t, -1)]) &&
+        Object.values(state.entries).some(hasContent)) {
+      msg = '어제는 쉬었네요. 이틀 연속으로 빠지지만 않으면 습관은 유지돼요. 하나만 써도 괜찮아요!';
+    }
   }
+  el.textContent = msg;
+  el.hidden = !msg;
 }
 
 function renderWrite() {
   $('#entry-date').value = currentDate;
   $('#entry-date').max = todayKey();
   $('#next-day').disabled = currentDate >= todayKey();
-  $('#prompt-text').textContent = PROMPTS[promptIdx];
+  $('#hard-day').setAttribute('aria-pressed', String(!!draft.hardDay));
+  $('#intention-card').hidden = !state.settings.morning;
+  $('#intention').value = draft.intention || '';
+  promptIdx %= prompts().length;
+  $('#prompt-text').textContent = prompts()[promptIdx];
   $('#self').value = draft.self;
   $('#save-status').textContent = state.entries[currentDate] ? '저장됨' : '';
+  renderPeopleList();
   renderMoods();
   renderItems();
   renderNudge();
+}
+
+function renderPeopleList() {
+  const counts = peopleCounts(Object.values(state.entries));
+  $('#people-list').innerHTML = counts.slice(0, 30).map(([p]) => `<option value="${esc(p)}">`).join('');
 }
 
 function goToDate(k) {
@@ -151,13 +216,23 @@ function goToDate(k) {
 
 function saveDraft() {
   saveTimer = null;
-  const items = draft.items.map((it) => ({ what: it.what.trim(), why: it.why.trim(), starred: it.starred }))
+  const items = draft.items
+    .map((it) => ({ what: it.what.trim(), why: it.why.trim(), who: it.who.trim(), category: it.category, role: it.role.trim(), starred: it.starred }))
     .filter((it) => it.what || it.why);
-  const empty = !items.length && !draft.self.trim() && draft.moodBefore === null && draft.moodAfter === null;
+  const empty = !items.length && !draft.self.trim() && !(draft.intention || '').trim() &&
+    draft.moodBefore === null && draft.moodAfter === null;
+  const now = Date.now();
   if (empty) {
-    delete state.entries[currentDate];
+    if (state.entries[currentDate]) {
+      delete state.entries[currentDate];
+      changed('entry', currentDate, now);
+    }
   } else {
-    state.entries[currentDate] = { moodBefore: draft.moodBefore, moodAfter: draft.moodAfter, items, self: draft.self.trim(), updatedAt: Date.now() };
+    state.entries[currentDate] = {
+      moodBefore: draft.moodBefore, moodAfter: draft.moodAfter, items,
+      self: draft.self.trim(), hardDay: !!draft.hardDay, intention: (draft.intention || '').trim(), updatedAt: now,
+    };
+    changed('entry', currentDate, now);
   }
   const ok = persist();
   $('#save-status').textContent = ok ? (empty ? '' : '저장됨') : '저장 실패 (브라우저 저장소를 사용할 수 없어요)';
@@ -180,18 +255,28 @@ function flushSave() {
 
 $('#items').addEventListener('input', (ev) => {
   const card = ev.target.closest('.item');
-  if (!card || !ev.target.dataset.field) return;
+  const field = ev.target.dataset.field;
+  if (!card || !field) return;
   const i = Number(card.dataset.i);
-  draft.items[i][ev.target.dataset.field] = ev.target.value;
-  if (ev.target.dataset.field === 'what') checkDuplicate(i);
+  draft.items[i][field] = ev.target.value;
+  if (field === 'what') checkDuplicate(i);
   scheduleSave();
 });
 $('#items').addEventListener('click', (ev) => {
-  if (ev.target.dataset.act !== 'star') return;
-  const i = Number(ev.target.closest('.item').dataset.i);
-  draft.items[i].starred = !draft.items[i].starred;
-  ev.target.classList.toggle('on', draft.items[i].starred);
-  scheduleSave();
+  const card = ev.target.closest('.item');
+  if (!card) return;
+  const i = Number(card.dataset.i);
+  if (ev.target.dataset.act === 'star') {
+    draft.items[i].starred = !draft.items[i].starred;
+    ev.target.classList.toggle('on', draft.items[i].starred);
+    scheduleSave();
+  }
+  const cat = ev.target.closest('.cat')?.dataset.cat;
+  if (cat) {
+    draft.items[i].category = draft.items[i].category === cat ? null : cat;
+    card.querySelectorAll('.cat').forEach((b) => b.classList.toggle('on', b.dataset.cat === draft.items[i].category));
+    scheduleSave();
+  }
 });
 document.querySelectorAll('.moods').forEach((box) => box.addEventListener('click', (ev) => {
   const btn = ev.target.closest('.mood');
@@ -201,11 +286,21 @@ document.querySelectorAll('.moods').forEach((box) => box.addEventListener('click
   renderMoods();
   scheduleSave();
 }));
+$('#hard-day').addEventListener('click', () => {
+  draft.hardDay = !draft.hardDay;
+  promptIdx = 0;
+  $('#hard-day').setAttribute('aria-pressed', String(draft.hardDay));
+  $('#prompt-text').textContent = prompts()[promptIdx];
+  renderItems();
+  scheduleSave();
+});
+$('#intention').addEventListener('input', (ev) => { draft.intention = ev.target.value; scheduleSave(); });
 $('#self').addEventListener('input', (ev) => { draft.self = ev.target.value; scheduleSave(); });
 $('#save').addEventListener('click', () => { clearTimeout(saveTimer); saveDraft(); });
 $('#new-prompt').addEventListener('click', () => {
-  promptIdx = (promptIdx + 1 + Math.floor(Math.random() * (PROMPTS.length - 1))) % PROMPTS.length;
-  $('#prompt-text').textContent = PROMPTS[promptIdx];
+  const list = prompts();
+  promptIdx = (promptIdx + 1 + Math.floor(Math.random() * (list.length - 1))) % list.length;
+  $('#prompt-text').textContent = list[promptIdx];
 });
 $('#prev-day').addEventListener('click', () => goToDate(addDays(currentDate, -1)));
 $('#next-day').addEventListener('click', () => goToDate(addDays(currentDate, 1)));
@@ -221,32 +316,36 @@ function highlight(text, q) {
 
 function renderHistory() {
   const q = $('#search').value.trim();
+  const ql = q.toLowerCase();
   const starredOnly = $('#starred-only').checked;
   const keys = Object.keys(state.entries).sort().reverse();
   const html = keys.map((k) => {
     const e = state.entries[k];
-    let items = e.items.map((it, idx) => ({ ...it, idx }));
+    let items = e.items.map((it, idx) => ({ ...normItem(it), idx }));
     if (starredOnly) items = items.filter((it) => it.starred);
-    if (q) items = items.filter((it) => (it.what + ' ' + it.why).toLowerCase().includes(q.toLowerCase()));
-    const selfMatch = e.self && !starredOnly && (!q || e.self.toLowerCase().includes(q.toLowerCase()));
+    if (q) items = items.filter((it) => [it.what, it.why, it.who, it.role].join(' ').toLowerCase().includes(ql));
+    const selfMatch = e.self && !starredOnly && (!q || e.self.toLowerCase().includes(ql));
     if (!items.length && !selfMatch) return '';
     const mood = e.moodBefore !== null || e.moodAfter !== null
       ? `<span class="muted">${e.moodBefore !== null ? MOODS[e.moodBefore] : '·'} → ${e.moodAfter !== null ? MOODS[e.moodAfter] : '·'}</span>` : '';
     return `<div class="card day">
-      <h3><span>${fmtDate(k)} ${mood}</span><button data-edit="${k}">수정</button></h3>
+      <h3><span>${fmtDate(k)} ${e.hardDay ? '😮‍💨 ' : ''}${mood}</span><button data-edit="${k}">수정</button></h3>
       <ul>${items.map((it) => `<li><button class="star${it.starred ? ' on' : ''}" data-day="${k}" data-idx="${it.idx}" aria-label="별표">★</button>
-        <div>${highlight(it.what, q)}${it.why ? `<span class="why">${highlight(it.why, q)}</span>` : ''}</div></li>`).join('')}
-        ${selfMatch ? `<li><span>🙌</span><div><span class="why">나에게: ${highlight(e.self, q)}</span></div></li>` : ''}
+        <div>${highlight(it.what, q)}${itemTags(it)}${it.why ? `<span class="why">${highlight(it.why, q)}</span>` : ''}${it.role ? `<span class="why">내 역할: ${highlight(it.role, q)}</span>` : ''}</div></li>`).join('')}
+        ${selfMatch ? `<li><span>🙋</span><div><span class="why">나에게: ${highlight(e.self, q)}</span></div></li>` : ''}
       </ul></div>`;
   }).join('');
-  $('#history-list').innerHTML = html || `<p class="empty">${keys.length ? '조건에 맞는 기록이 없어요.' : '아직 기록이 없어요. 오늘의 감사 세 가지로 시작해 보세요.'}</p>`;
+  $('#history-list').innerHTML = html || `<p class="empty">${keys.length ? '조건에 맞는 기록이 없어요.' : '아직 기록이 없어요. 오늘의 감사로 시작해 보세요.'}</p>`;
 }
 
 function toggleStar(day, idx) {
-  const it = state.entries[day]?.items[idx];
+  const e = state.entries[day];
+  const it = e?.items[idx];
   if (!it) return;
   it.starred = !it.starred;
+  e.updatedAt = Date.now();
   persist();
+  changed('entry', day, e.updatedAt);
   if (day === currentDate) draft = getDraft();
 }
 
@@ -258,12 +357,10 @@ $('#history-list').addEventListener('click', (ev) => {
   if (ev.target.dataset.day) { toggleStar(ev.target.dataset.day, Number(ev.target.dataset.idx)); renderHistory(); }
 });
 
-// ---------- 회고 화면 ----------
-let reviewWeek = weekStart(todayKey());
-
+// ---------- 회고: 공통 ----------
 function topWords(texts) {
   const counts = new Map();
-  texts.join(' ').split(/[\s.,!?~·…'"()\[\]]+/).forEach((w) => {
+  texts.join(' ').split(/[\s.,!?~·…'"()[\]]+/).forEach((w) => {
     w = w.replace(PARTICLES, '');
     if (w.length < 2 || STOPWORDS.has(w) || /^\d+$/.test(w)) return;
     counts.set(w, (counts.get(w) || 0) + 1);
@@ -271,50 +368,193 @@ function topWords(texts) {
   return [...counts].filter(([, c]) => c >= 2).sort((a, b) => b[1] - a[1]).slice(0, 12);
 }
 
+function peopleCounts(entries) {
+  const counts = new Map();
+  entries.forEach((e) => e.items.forEach((it) => splitPeople(it.who).forEach((p) => counts.set(p, (counts.get(p) || 0) + 1))));
+  return [...counts].sort((a, b) => b[1] - a[1]);
+}
+
+function periodSummary(dayKeys) {
+  const written = dayKeys.filter((k) => hasContent(state.entries[k]));
+  const items = written.flatMap((k) => state.entries[k].items.map((it, idx) => ({ ...normItem(it), idx, day: k })).filter((it) => it.what));
+  const gains = written.map((k) => state.entries[k]).filter((e) => e.moodBefore !== null && e.moodAfter !== null)
+    .map((e) => e.moodAfter - e.moodBefore);
+  const avgGain = gains.length ? gains.reduce((a, b) => a + b, 0) / gains.length : null;
+  return { written, items, avgGain };
+}
+
+function statsHtml(written, total, items, avgGain) {
+  return `
+    <div class="stat"><b>${written}/${total}</b><span>쓴 날</span></div>
+    <div class="stat"><b>${items}</b><span>감사한 것</span></div>
+    <div class="stat"><b>${avgGain === null ? '–' : (avgGain > 0 ? '+' : '') + avgGain.toFixed(1)}</b><span>평균 기분 변화</span></div>`;
+}
+
+function starList(items) {
+  return `<div class="day"><ul>${items.map((it) => `<li><button class="star${it.starred ? ' on' : ''}" data-day="${it.day}" data-idx="${it.idx}" aria-label="별표">★</button>
+    <div>${esc(it.what)}${itemTags(it)}<span class="why">${fmtDate(it.day)}${it.why ? ' · ' + esc(it.why) : ''}</span></div></li>`).join('')}</ul></div>`;
+}
+
+let reviewPeriod = 'week';
+document.querySelector('.segmented').addEventListener('click', (ev) => {
+  const p = ev.target.dataset.period;
+  if (!p) return;
+  flushReview();
+  reviewPeriod = p;
+  document.querySelectorAll('.seg').forEach((b) => b.classList.toggle('active', b.dataset.period === p));
+  $('#review-week').hidden = p !== 'week';
+  $('#review-month').hidden = p !== 'month';
+  renderReview();
+});
 function renderReview() {
+  if (reviewPeriod === 'week') renderWeek(); else renderMonth();
+}
+
+// ---------- 회고: 주간 ----------
+let reviewWeek = weekStart(todayKey());
+let weekItems = [];
+
+function renderWeek() {
   const days = Array.from({ length: 7 }, (_, i) => addDays(reviewWeek, i));
-  const end = days[6];
-  $('#week-label').textContent = `${fmtDate(reviewWeek)} – ${fmtDate(end)}`;
+  $('#week-label').textContent = `${fmtDate(reviewWeek)} – ${fmtDate(days[6])}`;
   $('#next-week').disabled = addDays(reviewWeek, 7) > todayKey();
 
-  const written = days.filter((k) => hasContent(state.entries[k]));
-  const items = written.flatMap((k) => state.entries[k].items.map((it, idx) => ({ ...it, idx, day: k })).filter((it) => it.what));
-  const moodGains = written.map((k) => state.entries[k]).filter((e) => e.moodBefore !== null && e.moodAfter !== null)
-    .map((e) => e.moodAfter - e.moodBefore);
-  const avgGain = moodGains.length ? (moodGains.reduce((a, b) => a + b, 0) / moodGains.length) : null;
-
-  $('#week-stats').innerHTML = `
-    <div class="stat"><b>${written.length}/7</b><span>쓴 날</span></div>
-    <div class="stat"><b>${items.length}</b><span>감사한 것</span></div>
-    <div class="stat"><b>${avgGain === null ? '–' : (avgGain > 0 ? '+' : '') + avgGain.toFixed(1)}</b><span>평균 기분 변화</span></div>`;
-
-  $('#week-items').innerHTML = items.length
-    ? `<div class="day"><ul>${items.map((it) => `<li><button class="star${it.starred ? ' on' : ''}" data-day="${it.day}" data-idx="${it.idx}" aria-label="별표">★</button>
-        <div>${esc(it.what)}<span class="why">${fmtDate(it.day)}${it.why ? ' · ' + esc(it.why) : ''}</span></div></li>`).join('')}</ul></div>`
-    : '<p class="muted">이 주에는 기록이 없어요.</p>';
+  const { written, items, avgGain } = periodSummary(days);
+  weekItems = items;
+  $('#week-stats').innerHTML = statsHtml(written.length, 7, items.length, avgGain);
+  $('#week-items').innerHTML = items.length ? starList(items) : '<p class="muted">이 주에는 기록이 없어요.</p>';
 
   const words = topWords(items.map((it) => `${it.what} ${it.why}`));
   $('#week-words').innerHTML = words.length
     ? words.map(([w, c]) => `<span class="chip">${esc(w)} ×${c}</span>`).join('')
     : '<span class="muted">두 번 이상 나온 단어가 아직 없어요.</span>';
 
-  $('#week-note').value = state.reviews[reviewWeek]?.note || '';
-  $('#week-status').textContent = '';
+  const r = state.reviews[reviewWeek] || {};
+  // 별표한 항목을 먼저 보여 준다
+  const ordered = [...items].sort((a, b) => Number(b.starred) - Number(a.starred));
+  $('#deep-pick').innerHTML = '<option value="">깊이 쓸 항목 고르기</option>' +
+    ordered.map((it) => `<option value="${it.day}|${it.idx}">${it.starred ? '⭐ ' : ''}${esc(it.what)}</option>`).join('');
+  $('#deep-pick').value = r.deepPick && ordered.some((it) => `${it.day}|${it.idx}` === r.deepPick) ? r.deepPick : '';
+  $('#deep-text').value = r.deep || '';
+
+  const weekPeople = peopleCounts(written.map((k) => state.entries[k])).map(([p]) => p);
+  $('#people-list').innerHTML = weekPeople.map((p) => `<option value="${esc(p)}">`).join('');
+  $('#thanks-to').value = r.thanksTo || '';
+  $('#thanks-to').placeholder = weekPeople.length ? `누구에게? (이번 주: ${weekPeople.slice(0, 3).join(', ')})` : '누구에게?';
+  $('#thanks-msg').value = r.thanksMsg || '';
+  $('#thanks-sent').checked = !!r.thanksSent;
+  $('#week-note').value = r.note || '';
+  $('#week-status').textContent = state.reviews[reviewWeek] ? '저장됨' : '';
 }
+
+let reviewTimer = null;
+function saveReview() {
+  reviewTimer = null;
+  const r = {
+    deepPick: $('#deep-pick').value,
+    deep: $('#deep-text').value.trim(),
+    thanksTo: $('#thanks-to').value.trim(),
+    thanksMsg: $('#thanks-msg').value.trim(),
+    thanksSent: $('#thanks-sent').checked,
+    note: $('#week-note').value.trim(),
+  };
+  const empty = !r.deep && !r.thanksTo && !r.thanksMsg && !r.thanksSent && !r.note;
+  const now = Date.now();
+  if (empty) {
+    if (state.reviews[reviewWeek]) { delete state.reviews[reviewWeek]; changed('review', reviewWeek, now); }
+  } else {
+    state.reviews[reviewWeek] = { ...r, updatedAt: now };
+    changed('review', reviewWeek, now);
+  }
+  $('#week-status').textContent = persist() ? (empty ? '' : '저장됨') : '저장 실패';
+}
+function scheduleReviewSave() {
+  $('#week-status').textContent = '작성 중…';
+  clearTimeout(reviewTimer);
+  reviewTimer = setTimeout(saveReview, 600);
+}
+function flushReview() {
+  if (reviewTimer === null) return;
+  clearTimeout(reviewTimer);
+  saveReview();
+}
+['#deep-text', '#thanks-to', '#thanks-msg', '#week-note'].forEach((id) => $(id).addEventListener('input', scheduleReviewSave));
+['#deep-pick', '#thanks-sent'].forEach((id) => $(id).addEventListener('change', scheduleReviewSave));
+
+$('#deep-pick').addEventListener('change', () => {
+  const [day, idx] = $('#deep-pick').value.split('|');
+  const it = weekItems.find((x) => x.day === day && String(x.idx) === idx);
+  if (it && !$('#deep-text').value.trim()) $('#deep-text').placeholder = `"${it.what}"이(가) 없었다면…`;
+});
+
+$('#send-thanks').addEventListener('click', async () => {
+  const to = $('#thanks-to').value.trim();
+  const msg = $('#thanks-msg').value.trim();
+  if (!msg) { $('#thanks-msg').focus(); return; }
+  const text = to ? `${to}에게,\n${msg}` : msg;
+  try {
+    if (navigator.share) {
+      await navigator.share({ text });
+    } else {
+      await navigator.clipboard.writeText(text);
+      $('#week-status').textContent = '메시지를 복사했어요. 메신저에 붙여 넣어 보내세요.';
+    }
+    $('#thanks-sent').checked = true;
+    scheduleReviewSave();
+  } catch (err) {
+    if (err.name !== 'AbortError') $('#week-status').textContent = '공유하지 못했어요. 메시지를 직접 복사해 주세요.';
+  }
+});
 
 $('#week-items').addEventListener('click', (ev) => {
   if (!ev.target.dataset.day) return;
+  flushReview();
   toggleStar(ev.target.dataset.day, Number(ev.target.dataset.idx));
-  renderReview();
+  renderWeek();
 });
-$('#prev-week').addEventListener('click', () => { reviewWeek = addDays(reviewWeek, -7); renderReview(); });
-$('#next-week').addEventListener('click', () => { reviewWeek = addDays(reviewWeek, 7); renderReview(); });
-$('#save-week').addEventListener('click', () => {
-  const note = $('#week-note').value.trim();
-  if (note) state.reviews[reviewWeek] = { note, updatedAt: Date.now() };
-  else delete state.reviews[reviewWeek];
-  $('#week-status').textContent = persist() ? '저장됨' : '저장 실패';
+$('#prev-week').addEventListener('click', () => { flushReview(); reviewWeek = addDays(reviewWeek, -7); renderWeek(); });
+$('#next-week').addEventListener('click', () => { flushReview(); reviewWeek = addDays(reviewWeek, 7); renderWeek(); });
+
+// ---------- 회고: 월간 ----------
+let reviewMonth = monthKey(todayKey());
+
+function barRows(rows, max) {
+  return rows.map(([label, n]) => `<div class="bar-row"><span>${label}</span><span class="bar"><i style="width:${Math.round((n / max) * 100)}%"></i></span><span class="n">${n}</span></div>`).join('');
+}
+
+function renderMonth() {
+  const [y, m] = reviewMonth.split('-').map(Number);
+  $('#month-label').textContent = `${y}년 ${m}월`;
+  $('#next-month').disabled = addMonths(reviewMonth, 1) > monthKey(todayKey());
+  const daysInMonth = new Date(y, m, 0).getDate();
+  const days = Array.from({ length: daysInMonth }, (_, i) => `${reviewMonth}-${pad(i + 1)}`);
+  const { written, items, avgGain } = periodSummary(days);
+  const elapsed = reviewMonth === monthKey(todayKey()) ? fromKey(todayKey()).getDate() : daysInMonth;
+  $('#month-stats').innerHTML = statsHtml(written.length, elapsed, items.length, avgGain);
+
+  const people = peopleCounts(written.map((k) => state.entries[k])).slice(0, 7);
+  $('#month-people').innerHTML = people.length
+    ? barRows(people.map(([p, n]) => [esc(p), n]), people[0][1])
+    : '<p class="muted">"누구 덕분인가요?" 칸을 채우면 고마운 사람이 여기 모여요.</p>';
+
+  const catCounts = CATEGORIES.map((c) => [`${c.icon} ${c.label}`, items.filter((it) => it.category === c.id).length]);
+  const untagged = items.filter((it) => !catOf(it.category)).length;
+  const maxCat = Math.max(1, ...catCounts.map(([, n]) => n));
+  $('#month-cats').innerHTML = items.length
+    ? barRows(catCounts, maxCat) + (untagged ? `<p class="muted small">범주를 고르지 않은 항목 ${untagged}개</p>` : '')
+    : '<p class="muted">이 달에는 기록이 없어요.</p>';
+
+  const stars = items.filter((it) => it.starred);
+  $('#month-stars').innerHTML = stars.length ? starList(stars) : '<p class="muted">별표한 항목이 없어요.</p>';
+}
+
+$('#month-stars').addEventListener('click', (ev) => {
+  if (!ev.target.dataset.day) return;
+  toggleStar(ev.target.dataset.day, Number(ev.target.dataset.idx));
+  renderMonth();
 });
+$('#prev-month').addEventListener('click', () => { reviewMonth = addMonths(reviewMonth, -1); renderMonth(); });
+$('#next-month').addEventListener('click', () => { reviewMonth = addMonths(reviewMonth, 1); renderMonth(); });
 
 // ---------- 설정 ----------
 $('#item-count').value = String(state.settings.itemCount);
@@ -323,6 +563,12 @@ $('#item-count').addEventListener('change', (ev) => {
   state.settings.itemCount = Number(ev.target.value);
   persist();
   draft = getDraft();
+  renderWrite();
+});
+$('#morning-toggle').checked = !!state.settings.morning;
+$('#morning-toggle').addEventListener('change', (ev) => {
+  state.settings.morning = ev.target.checked;
+  persist();
   renderWrite();
 });
 
@@ -359,11 +605,18 @@ $('#import').addEventListener('change', async (ev) => {
     for (const [k, e] of Object.entries(data.entries)) {
       if (!/^\d{4}-\d{2}-\d{2}$/.test(k) || !Array.isArray(e?.items)) continue;
       const cur = state.entries[k];
-      if (!cur || (e.updatedAt || 0) > (cur.updatedAt || 0)) { state.entries[k] = e; added++; }
+      if (!cur || (e.updatedAt || 0) > (cur.updatedAt || 0)) {
+        state.entries[k] = { ...e, updatedAt: e.updatedAt || Date.now() };
+        changed('entry', k, state.entries[k].updatedAt);
+        added++;
+      }
     }
     for (const [k, r] of Object.entries(data.reviews || {})) {
       const cur = state.reviews[k];
-      if (!cur || (r.updatedAt || 0) > (cur.updatedAt || 0)) state.reviews[k] = r;
+      if (!cur || (r.updatedAt || 0) > (cur.updatedAt || 0)) {
+        state.reviews[k] = { ...r, updatedAt: r.updatedAt || Date.now() };
+        changed('review', k, state.reviews[k].updatedAt);
+      }
     }
     persist();
     draft = getDraft();
@@ -375,32 +628,120 @@ $('#import').addEventListener('change', async (ev) => {
   ev.target.value = '';
 });
 
+// ---------- 동기화 ----------
+function renderSync() {
+  const info = Sync.info();
+  $('#sync-unconfigured').hidden = info.configured;
+  $('#sync-signed-out').hidden = !info.configured || !!info.email;
+  $('#sync-signed-in').hidden = !info.email;
+  $('#sync-user').textContent = info.email || '';
+  let detail;
+  if (info.syncing) detail = '동기화 중…';
+  else if (info.error) detail = `⚠️ ${info.error}`;
+  else if (!info.online) detail = '오프라인: 연결되면 자동으로 동기화해요.';
+  else if (info.lastSync) detail = `마지막 동기화 ${new Date(info.lastSync).toLocaleString('ko-KR')}`;
+  else detail = '';
+  if (info.pending && !info.syncing) detail += ` (보낼 변경 ${info.pending}건)`;
+  $('#sync-detail').textContent = detail;
+
+  const badge = $('#sync-badge');
+  badge.hidden = !info.email;
+  badge.textContent = info.syncing ? '⏳' : info.error ? '⚠️' : (!info.online || info.pending) ? '☁️…' : '☁️';
+  badge.title = detail;
+
+  const server = Sync.server();
+  if (document.activeElement !== $('#server-url')) $('#server-url').value = server.url;
+  if (document.activeElement !== $('#server-key')) $('#server-key').value = server.key;
+}
+
+async function authAction(fn, okMsg) {
+  const email = $('#sync-email').value.trim();
+  const password = $('#sync-password').value;
+  if (!email || password.length < 6) { $('#sync-msg').textContent = '이메일과 6자 이상의 비밀번호를 입력해 주세요.'; return; }
+  $('#sync-msg').textContent = '잠시만요…';
+  try {
+    const result = await fn(email, password);
+    $('#sync-msg').textContent = result === 'confirm'
+      ? '확인 메일을 보냈어요. 메일의 링크를 누른 뒤 여기서 로그인해 주세요.'
+      : okMsg;
+    $('#sync-password').value = '';
+  } catch (err) {
+    $('#sync-msg').textContent = `실패: ${err.message}`;
+  }
+  renderSync();
+}
+$('#sync-signed-out').addEventListener('submit', (ev) => { ev.preventDefault(); authAction(Sync.signIn, '로그인했어요. 기록을 동기화합니다.'); });
+$('#sign-up').addEventListener('click', () => authAction(Sync.signUp, '가입하고 로그인했어요.'));
+$('#sign-out').addEventListener('click', async () => {
+  await Sync.signOut();
+  $('#sync-msg').textContent = '로그아웃했어요. 이 기기의 기록은 그대로 남아 있어요.';
+  renderSync();
+});
+$('#sync-now').addEventListener('click', () => { flushSave(); flushReview(); Sync.syncNow(); });
+$('#save-server').addEventListener('click', () => {
+  Sync.setServer($('#server-url').value.trim(), $('#server-key').value.trim());
+  $('#sync-msg').textContent = '서버 설정을 저장했어요.';
+  renderSync();
+});
+
+Sync.init({
+  getDoc: (kind, key) => state[COLLECTION[kind]][key] || null,
+  localTs: (kind, key) => state[COLLECTION[kind]][key]?.updatedAt || 0,
+  allDocs: () => Object.entries(COLLECTION).flatMap(([kind, coll]) =>
+    Object.entries(state[coll]).map(([key, doc]) => ({ kind, key, ts: doc.updatedAt || Date.now() }))),
+  apply(kind, key, doc) {
+    const coll = state[COLLECTION[kind]];
+    if (doc) coll[key] = doc; else delete coll[key];
+  },
+  // 다른 기기에서 받은 변경을 화면에 반영한다 (지금 고치는 중인 곳은 건드리지 않는다)
+  afterApply(keys) {
+    persist();
+    renderStreak();
+    const editingEntry = saveTimer !== null;
+    const editingReview = reviewTimer !== null;
+    if (!editingEntry && keys.includes(`entry|${currentDate}`)) { draft = getDraft(); renderWrite(); }
+    const view = document.querySelector('.view.active').id;
+    if (view === 'view-history') renderHistory();
+    if (view === 'view-review' && !editingReview) renderReview();
+  },
+  onStatus: renderSync,
+});
+
 // ---------- 탭 ----------
 function switchView(name) {
   document.querySelectorAll('.tab').forEach((t) => t.classList.toggle('active', t.dataset.view === name));
   document.querySelectorAll('.view').forEach((v) => v.classList.toggle('active', v.id === `view-${name}`));
   if (name === 'history') renderHistory();
   if (name === 'review') renderReview();
-  if (name === 'write') renderWrite();
+  if (name === 'write') { draft = getDraft(); renderWrite(); }
+  if (name === 'settings') renderSync();
 }
 document.querySelector('.tabs').addEventListener('click', (ev) => {
   const view = ev.target.dataset.view;
   if (!view) return;
   flushSave();
+  flushReview();
   switchView(view);
 });
 
 function renderAll() {
   renderStreak();
   renderWrite();
+  renderSync();
 }
-window.addEventListener('beforeunload', flushSave);
+function flushAll() { flushSave(); flushReview(); }
+window.addEventListener('beforeunload', flushAll);
 // 아이폰은 앱을 닫을 때 beforeunload가 오지 않을 수 있어 화면이 가려질 때도 저장한다
-document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') flushSave(); });
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'hidden') flushAll();
+  Sync.syncNow();
+});
 
 if ('serviceWorker' in navigator && location.protocol !== 'file:') {
   navigator.serviceWorker.register('sw.js').catch(() => {});
 }
 // 브라우저가 저장 공간이 부족할 때 기록을 지우지 않도록 요청한다
 navigator.storage?.persist?.().catch(() => {});
+
 renderAll();
+Sync.syncNow();

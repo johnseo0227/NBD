@@ -131,3 +131,30 @@ details[open] summary { margin-bottom: 8px; }
 .bar { height: 10px; background: var(--accent-soft); border-radius: 999px; overflow: hidden; }
 .bar > i { display: block; height: 100%; background: var(--accent); border-radius: 999px; }
 .bar-row .n { text-align: right; color: var(--muted); }
+
+.memory { background: var(--accent-soft); border-color: transparent; }
+.memory p { margin: 0; font-weight: 600; }
+.memory .why { margin-top: 2px; }
+.memory .actions { margin-top: 6px; }
+
+.person-card { display: flex; justify-content: space-between; align-items: center; gap: 10px; width: 100%; text-align: left; margin-bottom: 8px; padding: 12px 14px; border-radius: 12px; }
+.person-card b { font-size: 1.05rem; }
+.person-card .meta { display: block; color: var(--muted); font-size: .8rem; }
+.person-card .count { font-size: 1.2rem; color: var(--accent); font-weight: 700; white-space: nowrap; }
+.nudge-tag { display: inline-block; margin-top: 4px; font-size: .75rem; background: var(--accent-soft); border-radius: 999px; padding: 1px 8px; }
+.person-head { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+.person-head h2 { margin: 0; font-size: 1.3rem; }
+.moment { display: flex; gap: 10px; align-items: flex-start; padding: 6px 0; border-top: 1px dashed var(--border); }
+.moment:first-child { border-top: 0; }
+.moment input { margin-top: 5px; }
+.tone { margin-bottom: 8px; }
+#letter { margin-bottom: 4px; }
+
+.effect-big { font-size: 1.6rem; font-weight: 700; color: var(--accent); }
+.effect-line { margin: 2px 0; }
+.daybars { display: flex; align-items: center; gap: 2px; height: 64px; margin: 10px 0 4px; }
+.daybars span { flex: 1; position: relative; height: 100%; }
+.daybars span i { position: absolute; left: 0; right: 0; border-radius: 2px; background: var(--accent); }
+.daybars span i.neg { background: var(--muted); }
+.daybars span.none::after { content: ''; position: absolute; left: 0; right: 0; top: 50%; border-top: 1px dotted var(--border); }
+.axis { display: flex; justify-content: space-between; font-size: .7rem; color: var(--muted); }

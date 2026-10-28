@@ -203,7 +203,9 @@ const Sync = (() => {
     for (let i = 0; i < pending.length; i += 200) {
       const chunk = pending.slice(i, i + 200);
       const rows = chunk.map(([k, ts]) => {
-        const [kind, key] = k.split('|');
+        const sep = k.indexOf('|');
+        const kind = k.slice(0, sep);
+        const key = k.slice(sep + 1);
         const doc = hooks.getDoc(kind, key);
         if (!doc) return { user_id: userId, kind, key, data: null, deleted: true, updated_at: ts };
         const { updatedAt, ...data } = doc;

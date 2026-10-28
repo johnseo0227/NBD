@@ -41,10 +41,11 @@ function load() {
     return {
       entries: data.entries || {},
       reviews: data.reviews || {},
+      people: data.people || {},
       settings: { itemCount: 3, morning: false, ...(data.settings || {}) },
     };
   } catch {
-    return { entries: {}, reviews: {}, settings: { itemCount: 3, morning: false } };
+    return { entries: {}, reviews: {}, people: {}, settings: { itemCount: 3, morning: false } };
   }
 }
 function persist() {
@@ -57,7 +58,7 @@ function persist() {
 }
 let state = load();
 
-const COLLECTION = { entry: 'entries', review: 'reviews' };
+const COLLECTION = { entry: 'entries', review: 'reviews', person: 'people' };
 // 기록이 바뀔 때마다 호출: 동기화 대기열에 올린다
 function changed(kind, key, ts) {
   Sync.markDirty(kind, key, ts);
@@ -72,6 +73,9 @@ const todayKey = () => toKey(new Date());
 const WEEKDAYS = ['일', '월', '화', '수', '목', '금', '토'];
 const fmtDate = (k) => { const d = fromKey(k); return `${d.getMonth() + 1}월 ${d.getDate()}일 (${WEEKDAYS[d.getDay()]})`; };
 const weekStart = (k) => { const d = fromKey(k); const diff = (d.getDay() + 6) % 7; return addDays(k, -diff); };
+const fmtDateY = (k) => `${fromKey(k).getFullYear()}년 ${fmtDate(k)}`;
+const fmtShort = (k) => { const d = fromKey(k); return `${d.getMonth() + 1}/${d.getDate()}`; };
+const daysBetween = (a, b) => Math.round((fromKey(b) - fromKey(a)) / 86_400_000);
 const monthKey = (k) => k.slice(0, 7);
 const addMonths = (m, n) => { const [y, mo] = m.split('-').map(Number); const d = new Date(y, mo - 1 + n, 1); return `${d.getFullYear()}-${pad(d.getMonth() + 1)}`; };
 
@@ -199,6 +203,7 @@ function renderWrite() {
   renderMoods();
   renderItems();
   renderNudge();
+  renderMemory();
 }
 
 function renderPeopleList() {
@@ -235,7 +240,14 @@ function saveDraft() {
     changed('entry', currentDate, now);
   }
   const ok = persist();
-  $('#save-status').textContent = ok ? (empty ? '' : '저장됨') : '저장 실패 (브라우저 저장소를 사용할 수 없어요)';
+  let status = empty ? '' : '저장됨';
+  const saved = state.entries[currentDate];
+  if (saved && hasMoods(saved)) {
+    status += ` · 오늘 기분 ${signed(saved.moodAfter - saved.moodBefore)} (평균 ${signed(moodEffect(Object.values(state.entries)).avg)})`;
+  }
+  $('#save-status').textContent = ok ? status : '저장 실패 (브라우저 저장소를 사용할 수 없어요)';
+  // 오늘 일기를 쓰면 앱 아이콘의 알림 배지를 지운다
+  if (currentDate === todayKey() && hasContent(saved)) navigator.clearAppBadge?.().catch(() => {});
   renderStreak();
   renderNudge();
 }
@@ -289,6 +301,8 @@ document.querySelectorAll('.moods').forEach((box) => box.addEventListener('click
 $('#hard-day').addEventListener('click', () => {
   draft.hardDay = !draft.hardDay;
   promptIdx = 0;
+  memoryIdx = 0;
+  renderMemory();
   $('#hard-day').setAttribute('aria-pressed', String(draft.hardDay));
   $('#prompt-text').textContent = prompts()[promptIdx];
   renderItems();
@@ -396,12 +410,12 @@ function starList(items) {
 }
 
 let reviewPeriod = 'week';
-document.querySelector('.segmented').addEventListener('click', (ev) => {
+document.querySelector('#view-review .segmented').addEventListener('click', (ev) => {
   const p = ev.target.dataset.period;
   if (!p) return;
   flushReview();
   reviewPeriod = p;
-  document.querySelectorAll('.seg').forEach((b) => b.classList.toggle('active', b.dataset.period === p));
+  document.querySelectorAll('#view-review .seg').forEach((b) => b.classList.toggle('active', b.dataset.period === p));
   $('#review-week').hidden = p !== 'week';
   $('#review-month').hidden = p !== 'month';
   renderReview();
@@ -544,6 +558,8 @@ function renderMonth() {
     ? barRows(catCounts, maxCat) + (untagged ? `<p class="muted small">범주를 고르지 않은 항목 ${untagged}개</p>` : '')
     : '<p class="muted">이 달에는 기록이 없어요.</p>';
 
+  renderEffect(days);
+
   const stars = items.filter((it) => it.starred);
   $('#month-stars').innerHTML = stars.length ? starList(stars) : '<p class="muted">별표한 항목이 없어요.</p>';
 }
@@ -555,6 +571,245 @@ $('#month-stars').addEventListener('click', (ev) => {
 });
 $('#prev-month').addEventListener('click', () => { reviewMonth = addMonths(reviewMonth, -1); renderMonth(); });
 $('#next-month').addEventListener('click', () => { reviewMonth = addMonths(reviewMonth, 1); renderMonth(); });
+
+// ---------- 사람 노트 ----------
+// 사람마다 그 사람 덕분에 감사했던 순간을 날짜순으로 모은다
+function momentsByPerson() {
+  const map = new Map();
+  Object.keys(state.entries).sort().forEach((day) => {
+    state.entries[day].items.forEach((raw, idx) => {
+      const it = normItem(raw);
+      if (!it.what) return;
+      splitPeople(it.who).forEach((p) => {
+        if (!map.has(p)) map.set(p, []);
+        map.get(p).push({ day, idx, what: it.what, why: it.why, starred: it.starred });
+      });
+    });
+  });
+  return map;
+}
+
+// 마지막으로 고마움을 전한 날: 편지를 보낸 날과 주간 회고에서 "전했어요"로 표시한 주 가운데 늦은 쪽
+function lastThanked(name) {
+  let last = state.people[name]?.lastThanked || '';
+  for (const [week, r] of Object.entries(state.reviews)) {
+    if (!r.thanksSent || !splitPeople(r.thanksTo).includes(name)) continue;
+    const end = addDays(week, 6) < todayKey() ? addDays(week, 6) : todayKey();
+    if (end > last) last = end;
+  }
+  return last;
+}
+
+let currentPerson = null;
+let letterTone = 'casual';
+let letterEdited = false;
+let letterExcluded = new Set();
+
+function renderPeople() {
+  const map = momentsByPerson();
+  if (currentPerson && !map.has(currentPerson)) currentPerson = null;
+  $('#people-index').hidden = !!currentPerson;
+  $('#person-detail').hidden = !currentPerson;
+  if (currentPerson) { renderPerson(map.get(currentPerson)); return; }
+
+  const t = todayKey();
+  const people = [...map].sort((a, b) => b[1].length - a[1].length || (b[1].at(-1).day > a[1].at(-1).day ? 1 : -1));
+  $('#people-cards').innerHTML = people.length ? people.map(([name, ms]) => {
+    const thanked = lastThanked(name);
+    // 여러 번 고마웠는데 한 달 넘게 마음을 전하지 않은 사람
+    const due = ms.length >= 3 && (!thanked || daysBetween(thanked, t) > 30);
+    return `<button class="card person-card" data-person="${esc(name)}">
+      <span><b>${esc(name)}</b>
+        <span class="meta">최근 ${fmtDate(ms.at(-1).day)}${thanked ? ` · 💌 ${fmtShort(thanked)}에 전함` : ''}</span>
+        ${due ? '<span class="nudge-tag">고마움을 전해 볼까요?</span>' : ''}</span>
+      <span class="count">${ms.length}번</span></button>`;
+  }).join('') : '<p class="empty">아직 사람이 없어요. 오늘 탭에서 "누구 덕분인가요?"를 채워 보세요.</p>';
+}
+
+function buildLetter(name, moments) {
+  if (!moments.length) return '';
+  const n = moments.length;
+  const lines = moments.map((m) => {
+    const d = fromKey(m.day);
+    return `· ${d.getMonth() + 1}월 ${d.getDate()}일 — ${m.what}${m.why ? ` (${m.why})` : ''}`;
+  }).join('\n');
+  if (letterTone === 'polite') {
+    return `${name}님께,\n\n요즘 감사 일기를 쓰고 있는데, ${name}님 덕분에 감사했던 순간이 ${n > 1 ? `${n}번이나 있었어요. 그 순간들을 모아 보았어요.` : '있었어요. 그때 이야기를 꼭 전하고 싶었어요.'}\n\n${lines}\n\n덕분에 제 하루가 더 따뜻했어요. 진심으로 감사드립니다.`;
+  }
+  return `${name}에게,\n\n요즘 감사 일기를 쓰고 있는데, 네 덕분에 고마웠던 순간이 ${n > 1 ? `${n}번이나 있더라. 그 순간들을 모아 봤어.` : '있었어. 그때 이야기를 꼭 하고 싶었어.'}\n\n${lines}\n\n덕분에 내 하루가 더 따뜻했어. 정말 고마워.`;
+}
+
+function renderPerson(moments) {
+  const name = currentPerson;
+  const thanked = lastThanked(name);
+  $('#person-name').textContent = name;
+  $('#person-stats').innerHTML = `
+    <div class="stat"><b>${moments.length}</b><span>감사한 순간</span></div>
+    <div class="stat"><b>${daysBetween(moments[0].day, todayKey()) + 1}일</b><span>첫 기록부터</span></div>
+    <div class="stat"><b>${thanked ? fmtShort(thanked) : '–'}</b><span>마지막으로 전한 날</span></div>`;
+  $('#person-moments').innerHTML = [...moments].reverse().map((m) => {
+    const id = `${m.day}|${m.idx}`;
+    return `<label class="moment"><input type="checkbox" data-moment="${id}"${letterExcluded.has(id) ? '' : ' checked'}>
+      <span>${m.starred ? '⭐ ' : ''}${esc(m.what)}<span class="why">${fmtDate(m.day)}${m.why ? ' · ' + esc(m.why) : ''}</span></span></label>`;
+  }).join('');
+  document.querySelectorAll('.tone .seg').forEach((b) => b.classList.toggle('active', b.dataset.tone === letterTone));
+  if (!letterEdited) {
+    $('#letter').value = buildLetter(name, moments.filter((m) => !letterExcluded.has(`${m.day}|${m.idx}`)));
+    $('#letter-status').textContent = '';
+  }
+}
+
+function refreshLetter() {
+  if (letterEdited) {
+    $('#letter-status').textContent = '직접 고친 편지는 그대로 두었어요. "다시 만들기"를 누르면 반영돼요.';
+    renderPeople();
+    return;
+  }
+  renderPeople();
+}
+
+$('#people-cards').addEventListener('click', (ev) => {
+  const name = ev.target.closest('.person-card')?.dataset.person;
+  if (!name) return;
+  currentPerson = name;
+  letterEdited = false;
+  letterExcluded = new Set();
+  renderPeople();
+  window.scrollTo(0, 0);
+});
+$('#person-back').addEventListener('click', () => { currentPerson = null; renderPeople(); });
+$('#person-moments').addEventListener('change', (ev) => {
+  const id = ev.target.dataset.moment;
+  if (!id) return;
+  if (ev.target.checked) letterExcluded.delete(id); else letterExcluded.add(id);
+  refreshLetter();
+});
+document.querySelector('.tone').addEventListener('click', (ev) => {
+  const tone = ev.target.dataset.tone;
+  if (!tone) return;
+  letterTone = tone;
+  refreshLetter();
+});
+$('#letter').addEventListener('input', () => { letterEdited = true; });
+$('#regen-letter').addEventListener('click', () => { letterEdited = false; renderPeople(); });
+$('#send-letter').addEventListener('click', async () => {
+  const text = $('#letter').value.trim();
+  if (!text) return;
+  try {
+    if (navigator.share) {
+      await navigator.share({ text });
+    } else {
+      await navigator.clipboard.writeText(text);
+    }
+  } catch (err) {
+    if (err.name !== 'AbortError') $('#letter-status').textContent = '공유하지 못했어요. 편지를 직접 복사해 주세요.';
+    return;
+  }
+  const now = Date.now();
+  state.people[currentPerson] = { ...state.people[currentPerson], lastThanked: todayKey(), updatedAt: now };
+  persist();
+  changed('person', currentPerson, now);
+  renderPeople();
+  $('#letter-status').textContent = navigator.share ? '마음을 전했어요 💌' : '편지를 복사했어요. 메신저에 붙여 넣어 보내세요 💌';
+});
+
+// ---------- 다시 찾아오는 감사 ----------
+// years/months 전의 같은 날짜. 그 달에 없는 날(예: 2월 30일)이면 null
+function shiftBack(k, { years = 0, months = 0 }) {
+  const d = fromKey(k);
+  const day = d.getDate();
+  d.setDate(1);
+  d.setFullYear(d.getFullYear() - years);
+  d.setMonth(d.getMonth() - months);
+  if (day > new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate()) return null;
+  d.setDate(day);
+  return toKey(d);
+}
+const pickItem = (e) => {
+  const items = e.items.map(normItem).filter((it) => it.what);
+  return items.find((it) => it.starred) || items[0];
+};
+const hash = (str) => [...str].reduce((a, c) => (a * 31 + c.charCodeAt(0)) | 0, 7);
+
+function memoryCandidates(today, hardDay) {
+  const out = [];
+  const add = (label, day, it) => {
+    if (it && !out.some((m) => m.day === day && m.what === it.what)) out.push({ label, day, what: it.what, why: it.why });
+  };
+  // 일주일 넘게 지난 별표 항목. 날마다 순서가 바뀌도록 날짜로 섞는다
+  const starred = [];
+  for (const [day, e] of Object.entries(state.entries)) {
+    if (daysBetween(day, today) < 7) continue;
+    e.items.map(normItem).forEach((it) => { if (it.starred && it.what) starred.push([day, it]); });
+  }
+  starred.sort((a, b) => hash(today + a[0] + a[1].what) - hash(today + b[0] + b[1].what));
+  const starLabel = hardDay ? '😮‍💨 힘든 날엔, 이런 날도 있었어요' : '⭐ 예전에 별표한 순간';
+
+  if (hardDay) starred.forEach(([d, it]) => add(starLabel, d, it));
+  for (const [shift, label] of [[{ years: 1 }, '📅 1년 전 오늘'], [{ months: 6 }, '📅 6개월 전 오늘'], [{ months: 1 }, '📅 한 달 전 오늘']]) {
+    const d = shiftBack(today, shift);
+    if (d && state.entries[d]) add(label, d, pickItem(state.entries[d]));
+  }
+  if (!hardDay) starred.forEach(([d, it]) => add(starLabel, d, it));
+  return out;
+}
+
+let memoryIdx = 0;
+function renderMemory() {
+  const today = todayKey();
+  const list = currentDate === today ? memoryCandidates(today, !!draft.hardDay) : [];
+  $('#memory-card').hidden = !list.length;
+  if (!list.length) return;
+  const m = list[memoryIdx % list.length];
+  const when = fromKey(m.day).getFullYear() === fromKey(today).getFullYear() ? fmtDate(m.day) : fmtDateY(m.day);
+  $('#memory-label').textContent = `${m.label} · ${when}`;
+  $('#memory-text').innerHTML = `${esc(m.what)}${m.why ? `<span class="why">${esc(m.why)}</span>` : ''}`;
+  $('#memory-next').hidden = list.length < 2;
+}
+$('#memory-next').addEventListener('click', () => { memoryIdx++; renderMemory(); });
+
+// ---------- 나만의 효과 리포트 ----------
+const signed = (v) => (v > 0 ? '+' : '') + v.toFixed(1);
+const hasMoods = (e) => hasContent(e) && e.moodBefore != null && e.moodAfter != null;
+
+function moodEffect(entries) {
+  const rated = entries.filter(hasMoods);
+  const avg = (list) => (list.length ? list.reduce((a, e) => a + e.moodAfter - e.moodBefore, 0) / list.length : 0);
+  const hard = rated.filter((e) => e.hardDay);
+  return {
+    n: rated.length,
+    avg: avg(rated),
+    upShare: rated.length ? rated.filter((e) => e.moodAfter > e.moodBefore).length / rated.length : 0,
+    hardN: hard.length,
+    hardAvg: avg(hard),
+  };
+}
+
+function renderEffect(days) {
+  const all = moodEffect(Object.values(state.entries));
+  if (!all.n) {
+    $('#effect-report').innerHTML = '<p class="muted">쓰기 전·후 기분을 함께 고르면, 감사 일기가 나에게 주는 효과를 숫자로 보여 드려요.</p>';
+    return;
+  }
+  const month = moodEffect(days.map((k) => state.entries[k]).filter(Boolean));
+  // 날마다 기분 변화를 가운데 선 기준 위(좋아짐)·아래(나빠짐) 막대로 그린다. 최대 ±4단계
+  const bars = days.map((k) => {
+    const e = state.entries[k];
+    if (!e || !hasMoods(e)) return '<span class="none"></span>';
+    const g = e.moodAfter - e.moodBefore;
+    const h = Math.max((Math.abs(g) / 4) * 50, 2);
+    const style = g >= 0 ? `bottom:50%;height:${h}%` : `top:50%;height:${h}%`;
+    return `<span title="${fmtDate(k)} ${signed(g)}"><i class="${g < 0 ? 'neg' : ''}" style="${style}"></i></span>`;
+  }).join('');
+  $('#effect-report').innerHTML = `
+    ${month.n ? `<div class="effect-big">${signed(month.avg)}</div>
+      <p class="effect-line">이번 달, 감사 일기를 쓰고 나면 기분이 평균 <b>${signed(month.avg)}단계</b> 달라졌어요 (${month.n}일).</p>`
+      : '<p class="effect-line">이번 달에는 아직 기분 기록이 없어요.</p>'}
+    <p class="effect-line muted">전체 기간 평균 ${signed(all.avg)}단계 · 기분이 좋아진 날 ${Math.round(all.upShare * 100)}% (${all.n}일)</p>
+    ${all.hardN >= 2 ? `<p class="effect-line muted">힘든 날에도 평균 ${signed(all.hardAvg)}단계 (${all.hardN}일)</p>` : ''}
+    <div class="daybars" aria-hidden="true">${bars}</div>
+    <div class="axis"><span>1일</span><span>${days.length}일</span></div>`;
+}
 
 // ---------- 설정 ----------
 $('#item-count').value = String(state.settings.itemCount);
@@ -616,6 +871,13 @@ $('#import').addEventListener('change', async (ev) => {
       if (!cur || (r.updatedAt || 0) > (cur.updatedAt || 0)) {
         state.reviews[k] = { ...r, updatedAt: r.updatedAt || Date.now() };
         changed('review', k, state.reviews[k].updatedAt);
+      }
+    }
+    for (const [k, m] of Object.entries(data.people || {})) {
+      const cur = state.people[k];
+      if (!cur || (m.updatedAt || 0) > (cur.updatedAt || 0)) {
+        state.people[k] = { ...m, updatedAt: m.updatedAt || Date.now() };
+        changed('person', k, state.people[k].updatedAt);
       }
     }
     persist();
@@ -703,6 +965,7 @@ Sync.init({
     const view = document.querySelector('.view.active').id;
     if (view === 'view-history') renderHistory();
     if (view === 'view-review' && !editingReview) renderReview();
+    if (view === 'view-people' && !letterEdited) renderPeople();
   },
   onStatus: renderSync,
 });
@@ -715,6 +978,7 @@ function switchView(name) {
   if (name === 'review') renderReview();
   if (name === 'write') { draft = getDraft(); renderWrite(); }
   if (name === 'settings') renderSync();
+  if (name === 'people') renderPeople();
 }
 document.querySelector('.tabs').addEventListener('click', (ev) => {
   const view = ev.target.dataset.view;

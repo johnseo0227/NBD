@@ -28,6 +28,7 @@
     <button class="tab active" data-view="write">오늘</button>
     <button class="tab" data-view="history">기록</button>
     <button class="tab" data-view="review">회고</button>
+    <button class="tab" data-view="people">사람</button>
     <button class="tab" data-view="settings">설정</button>
   </nav>
 
@@ -40,6 +41,12 @@
         <button id="next-day" class="icon-btn" aria-label="다음 날">›</button>
       </div>
       <p id="nudge" class="nudge" hidden></p>
+
+      <div id="memory-card" class="card memory" hidden>
+        <span class="label" id="memory-label"></span>
+        <p id="memory-text"></p>
+        <div class="actions"><button id="memory-next" class="link-btn">다른 기억 보기</button></div>
+      </div>
 
       <div class="mode-row">
         <button type="button" id="hard-day" class="toggle-chip" aria-pressed="false">😮‍💨 오늘은 힘든 날</button>
@@ -156,8 +163,44 @@
           <div id="month-cats"></div>
         </div>
         <div class="card">
+          <span class="label">📈 나만의 효과 리포트</span>
+          <div id="effect-report"></div>
+        </div>
+        <div class="card">
           <span class="label">이 달의 ⭐</span>
           <div id="month-stars"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 사람 -->
+    <section id="view-people" class="view">
+      <div id="people-index">
+        <p class="muted hint">"누구 덕분인가요?"에 적은 사람들이 여기 모여요. 이름을 누르면 함께한 순간을 모아 편지로 보낼 수 있어요.</p>
+        <div id="people-cards"></div>
+      </div>
+      <div id="person-detail" hidden>
+        <div class="person-head">
+          <button id="person-back" class="icon-btn" aria-label="목록으로">‹</button>
+          <h2 id="person-name"></h2>
+        </div>
+        <div id="person-stats" class="stats"></div>
+        <div class="card">
+          <span class="label">함께한 감사의 순간 — 편지에 넣을 것만 체크</span>
+          <div id="person-moments"></div>
+        </div>
+        <div class="card">
+          <span class="label">💌 감사 편지</span>
+          <div class="segmented tone" role="tablist">
+            <button class="seg active" data-tone="casual">편하게</button>
+            <button class="seg" data-tone="polite">정중하게</button>
+          </div>
+          <textarea id="letter" rows="10"></textarea>
+          <div class="actions">
+            <button id="send-letter" class="primary">보내기 (공유)</button>
+            <button id="regen-letter">다시 만들기</button>
+          </div>
+          <p id="letter-status" class="muted"></p>
         </div>
       </div>
     </section>

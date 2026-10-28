@@ -2,14 +2,18 @@
 
 create table if not exists public.journal_docs (
   user_id    uuid        not null default auth.uid() references auth.users (id) on delete cascade,
-  kind       text        not null check (kind in ('entry', 'review')),
-  key        text        not null,          -- 일기: 날짜(YYYY-MM-DD), 회고: 그 주 월요일 날짜
+  kind       text        not null check (kind in ('entry', 'review', 'person')),
+  key        text        not null,          -- 일기: 날짜(YYYY-MM-DD), 회고: 그 주 월요일 날짜, 사람: 이름
   data       jsonb,                         -- 삭제된 문서는 null
   deleted    boolean     not null default false,
   updated_at bigint      not null,          -- 기기에서 마지막으로 고친 시각 (ms)
   synced_at  timestamptz not null default clock_timestamp(),  -- 서버에 들어온 시각: 기기가 새 변경을 받아 갈 기준
   primary key (user_id, kind, key)
 );
+
+-- 예전 버전으로 표를 만들었어도 다시 실행하면 허용 종류가 갱신되도록 한다
+alter table public.journal_docs drop constraint if exists journal_docs_kind_check;
+alter table public.journal_docs add constraint journal_docs_kind_check check (kind in ('entry', 'review', 'person'));
 
 create index if not exists journal_docs_user_synced on public.journal_docs (user_id, synced_at);
 

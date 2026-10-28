@@ -326,13 +326,26 @@ $('#item-count').addEventListener('change', (ev) => {
   renderWrite();
 });
 
-$('#export').addEventListener('click', () => {
-  const blob = new Blob([JSON.stringify(state, null, 2)], { type: 'application/json' });
+$('#export').addEventListener('click', async () => {
+  const name = `gratitude-journal-${todayKey()}.json`;
+  const json = JSON.stringify(state, null, 2);
+  // 아이폰 홈 화면 앱에서는 다운로드가 잘 안 되므로 공유 시트(파일에 저장, 에어드롭 등)를 쓴다
+  const file = new File([json], name, { type: 'application/json' });
+  if (navigator.canShare?.({ files: [file] }) && /iPhone|iPad|iPod/.test(navigator.userAgent)) {
+    try {
+      await navigator.share({ files: [file], title: '감사 일기 백업' });
+      $('#data-status').textContent = '백업 파일을 공유했어요.';
+      return;
+    } catch (err) {
+      if (err.name === 'AbortError') return;
+    }
+  }
   const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = `gratitude-journal-${todayKey()}.json`;
+  a.href = URL.createObjectURL(file);
+  a.download = name;
   a.click();
-  URL.revokeObjectURL(a.href);
+  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+  $('#data-status').textContent = '백업 파일을 내려받았어요.';
 });
 
 $('#import').addEventListener('change', async (ev) => {
@@ -382,4 +395,12 @@ function renderAll() {
   renderWrite();
 }
 window.addEventListener('beforeunload', flushSave);
+// 아이폰은 앱을 닫을 때 beforeunload가 오지 않을 수 있어 화면이 가려질 때도 저장한다
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') flushSave(); });
+
+if ('serviceWorker' in navigator && location.protocol !== 'file:') {
+  navigator.serviceWorker.register('sw.js').catch(() => {});
+}
+// 브라우저가 저장 공간이 부족할 때 기록을 지우지 않도록 요청한다
+navigator.storage?.persist?.().catch(() => {});
 renderAll();

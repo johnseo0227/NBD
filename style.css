@@ -23,22 +23,28 @@
 * { box-sizing: border-box; }
 body {
   margin: 0;
+  -webkit-text-size-adjust: 100%;
+  -webkit-tap-highlight-color: transparent;
   background: var(--bg);
   color: var(--text);
   font: 16px/1.5 -apple-system, "Apple SD Gothic Neo", "Noto Sans KR", "Malgun Gothic", sans-serif;
 }
-main, .top, .tabs { max-width: 640px; margin: 0 auto; padding: 0 16px; }
+main, .top, .tabs {
+  max-width: 640px; margin: 0 auto;
+  padding-left: max(16px, env(safe-area-inset-left));
+  padding-right: max(16px, env(safe-area-inset-right));
+}
 
-.top { display: flex; align-items: center; justify-content: space-between; padding-top: 20px; }
+.top { display: flex; align-items: center; justify-content: space-between; padding-top: max(20px, env(safe-area-inset-top)); }
 .top h1 { font-size: 1.4rem; margin: 0; }
 .streak { font-size: .9rem; color: var(--muted); }
 .streak b { color: var(--accent); }
 
-.tabs { display: flex; gap: 4px; margin-top: 12px; border-bottom: 1px solid var(--border); }
+.tabs { display: flex; gap: 4px; margin-top: 12px; border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 1; background: var(--bg); }
 .tab { flex: 1; background: none; border: 0; border-bottom: 2px solid transparent; padding: 10px 0; color: var(--muted); font: inherit; cursor: pointer; }
 .tab.active { color: var(--text); border-bottom-color: var(--accent); font-weight: 600; }
 
-.view { display: none; padding: 16px 0 48px; }
+.view { display: none; padding: 16px 0 calc(48px + env(safe-area-inset-bottom)); }
 .view.active { display: block; }
 
 .card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 14px; margin-bottom: 12px; }

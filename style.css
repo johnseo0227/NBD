@@ -217,3 +217,8 @@ button.wide { width: 100%; padding: 12px; margin: 4px 0 20px; }
 .qr svg { display: block; width: 100%; height: auto; }
 .share-text { margin: 0 0 8px; font-size: .88rem; }
 .install-steps { margin: 4px 0 0; padding-left: 1.2em; font-size: .88rem; }
+
+.backup-banner { background: var(--card); border: 1.5px solid var(--accent); border-radius: 12px; padding: 12px 14px; margin-bottom: 12px; }
+.backup-banner p { margin: 0 0 4px; font-size: .9rem; }
+.backup-status { margin: 0 0 8px; font-size: .9rem; }
+.backup-status.warn { color: var(--text); background: var(--accent-soft); border-radius: 8px; padding: 8px 10px; }
